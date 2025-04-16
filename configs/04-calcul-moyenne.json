@@ -4,17 +4,33 @@
   "description": "Écrire une méthode qui prend trois entiers en paramètre et retourne leur moyenne (en double).",
   "rules": {
     "requiredMethods": [
-      { "name": "calculerMoyenne", "params": ["int", "int", "int"], "returnType": "double" }
-    ],
-    "allowedOperators": ["+", "/"],
-    "checkVariableScope": true,
-    "customPatterns": [
       {
-        "pattern": "\\bdouble\\b.+=\\s*\\(.*\\)\\s*/\\s*3\\.0;",
-        "description": "La division doit être faite avec 3.0 pour assurer un résultat double.",
-        "errorMessage": "Assurez-vous de diviser par 3.0 (et non 3) pour obtenir une moyenne précise (double)."
+        "name": "calculerMoyenne",
+        "params": [
+          "int",
+          "int",
+          "int"
+        ],
+        "returnType": "double"
       }
     ],
-    "checkNamingConventions": ["camelCase"]
+    "allowedOperators": [
+      "+",
+      "/"
+    ],
+    "requiredControlStructures": [],
+    "checkVariableScope": true,
+    "checkNamingConventions": [
+      "camelCase"
+    ],
+    "customPatterns": [
+      {
+        "description": "La division doit être faite avec 3.0 pour assurer un résultat double.",
+        "errorMessage": "Assurez-vous de diviser par 3.0 (et non 3) pour obtenir une moyenne précise (double).",
+        "pattern": "\\bdouble\\b.+=\\s*\\(.*\\)\\s*/\\s*3\\.0;"
+      }
+    ],
+    "requiredDomainChecks": [],
+    "mathFunctions": []
   }
-} 
+}

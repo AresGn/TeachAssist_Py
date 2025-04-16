@@ -4,22 +4,37 @@
   "description": "Écrire une méthode qui prend un âge (int) et retourne true si la personne est majeure (18 ans ou plus), false sinon.",
   "rules": {
     "requiredMethods": [
-      { "name": "estMajeur", "params": ["int"], "returnType": "boolean" }
+      {
+        "name": "estMajeur",
+        "params": [
+          "int"
+        ],
+        "returnType": "boolean"
+      }
     ],
-    "allowedOperators": [">=", "<"],
-    "requiredControlStructures": ["if"],
+    "allowedOperators": [
+      ">=",
+      "<"
+    ],
+    "requiredControlStructures": [
+      "if"
+    ],
+    "checkVariableScope": false,
+    "checkNamingConventions": [],
     "customPatterns": [
       {
-        "pattern": "return\\s+age\\s*>=\\s*18;",
         "description": "Vérification de la condition age >= 18",
+        "pattern": "return\\s+age\\s*>=\\s*18;",
         "required": false
       },
       {
-        "pattern": "if\\s*\\(\\s*age\\s*<\\s*0\\s*\\)",
         "description": "Bonus : Vérifier si l'âge est valide (>= 0)",
-        "required": false,
-        "errorMessage": "Considérez la gestion d'un âge négatif comme invalide."
+        "errorMessage": "Considérez la gestion d'un âge négatif comme invalide.",
+        "pattern": "if\\s*\\(\\s*age\\s*<\\s*0\\s*\\)",
+        "required": false
       }
-    ]
+    ],
+    "requiredDomainChecks": [],
+    "mathFunctions": []
   }
-} 
+}

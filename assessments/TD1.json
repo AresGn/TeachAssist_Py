@@ -1,0 +1,15 @@
+{
+  "assessmentId": "TD1",
+  "name": "Traveaux Dirigé 1",
+  "exercises": [
+    {
+      "exerciseId": "02-intervalle",
+      "maxPoints": 10
+    },
+    {
+      "exerciseId": "08-fonction-log",
+      "maxPoints": 10
+    }
+  ],
+  "totalMaxPoints": 20
+}

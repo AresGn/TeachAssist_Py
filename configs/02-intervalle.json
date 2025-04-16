@@ -1,0 +1,68 @@
+{
+  "id": "02-intervalle",
+  "name": " Vérification d'appartenance à un intervalle",
+  "description": "Programme qui vérifie si un nombre réel appartient à l'ensemble I = [0,1] U [2,3] en utilisant uniquement les opérateurs < et ==.",
+  "rules": {
+    "requiredMethods": [
+      {
+        "name": "main",
+        "params": [
+          "String[]"
+        ],
+        "returnType": "void"
+      }
+    ],
+    "allowedOperators": [
+      "<",
+      "==",
+      "&&",
+      "||",
+      "!",
+      ">=",
+      "<="
+    ],
+    "requiredControlStructures": [
+      "if",
+      "else"
+    ],
+    "checkVariableScope": true,
+    "checkNamingConventions": [
+      "camelCase"
+    ],
+    "customPatterns": [
+      {
+        "description": "Vérification d'appartenance à l'intervalle",
+        "errorMessage": "pas grand choses",
+        "pattern": "if\\s*\\(\\s*\\(\\s*x\\s*>=\\s*0\\s*&&\\s*x\\s*<=\\s*1\\s*\\)\\s*\\|\\|\\s*\\(\\s*x\\s*>=\\s*2\\s*&&\\s*x\\s*<=\\s*3\\s*\\)\\s*\\)",
+        "required": false
+      },
+      {
+        "description": "Lecture de l'entrée utilisateur",
+        "errorMessage": "\"Vous devez utiliser Scanner pour lire l'entrée utilisateur",
+        "pattern": "Scanner|nextDouble|nextFloat",
+        "required": true
+      },
+      {
+        "description": "Message d'appartenance",
+        "errorMessage": "Vous devez afficher un message indiquant si x appartient à I",
+        "pattern": "System\\.out\\.print.*appartient\\s+à\\s+I    ",
+        "required": true
+      },
+      {
+        "description": "Message de non-appartenance\"",
+        "errorMessage": "Vous devez afficher un message indiquant si x n'appartient pas à I",
+        "pattern": "System\\.out\\.print.*n['']appartient\\s+pas\\s+à\\s+I  ",
+        "required": true
+      }
+    ],
+    "requiredDomainChecks": [
+      {
+        "errorMessage": "La variable x doit être testée pour l'intervalle I = [0,1] U [2,3]",
+        "operator": "in",
+        "value": "[0, 1, 2, 3]",
+        "variable": "x"
+      }
+    ],
+    "mathFunctions": []
+  }
+}

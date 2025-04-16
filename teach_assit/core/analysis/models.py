@@ -102,6 +102,10 @@ class ExerciseConfig:
             self.rules['requiredDomainChecks'] = []
         self.rules['requiredDomainChecks'] = domain_checks
     
+    def set_domain_checks(self, domain_checks):
+        """Alias pour set_required_domain_checks pour compatibilité avec l'interface."""
+        self.set_required_domain_checks(domain_checks)
+    
     def set_exception_handling(self, exception_handling):
         """
         Définit les paramètres de gestion des exceptions.
@@ -199,4 +203,22 @@ class AssessmentConfig:
     
     def update_max_points(self):
         """Met à jour le nombre total de points maximum."""
-        self.total_max_points = sum(ex.get('maxPoints', 0) for ex in self.exercises) 
+        self.total_max_points = sum(ex.get('maxPoints', 0) for ex in self.exercises)
+    
+    def update_exercise_points(self, exercise_id, new_max_points):
+        """
+        Modifie le nombre maximum de points pour un exercice existant.
+        
+        Args:
+            exercise_id (str): Identifiant de l'exercice à modifier.
+            new_max_points (int): Nouveau nombre maximal de points.
+            
+        Returns:
+            bool: True si l'exercice a été modifié, False si l'exercice n'a pas été trouvé.
+        """
+        for exercise in self.exercises:
+            if exercise['exerciseId'] == exercise_id:
+                exercise['maxPoints'] = new_max_points
+                self.update_max_points()  # Mettre à jour le total des points
+                return True
+        return False 

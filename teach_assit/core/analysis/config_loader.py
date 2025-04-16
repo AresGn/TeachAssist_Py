@@ -243,4 +243,69 @@ class ConfigLoader:
             return True
         except IOError as e:
             print(f"Erreur lors de la suppression de {filename}: {str(e)}")
-            return False 
+            return False
+    
+    def create_empty_exercise_config(self, exercise_id):
+        """
+        Crée une configuration d'exercice vide avec l'ID spécifié.
+        
+        Args:
+            exercise_id (str): Identifiant de l'exercice.
+            
+        Returns:
+            ExerciseConfig: Configuration vide de l'exercice.
+        """
+        # Création d'un dictionnaire avec les valeurs par défaut
+        config_dict = {
+            'id': exercise_id,
+            'name': f'Exercice {exercise_id}',
+            'description': '',
+            'rules': {
+                'requiredMethods': [],
+                'allowedOperators': [],
+                'requiredControlStructures': [],
+                'customPatterns': [],
+                'checkVariableScope': False,
+                'checkNamingConventions': []
+            }
+        }
+        
+        # Création de l'objet de configuration
+        config = ExerciseConfig(config_dict)
+        
+        # Ajout au cache
+        self.exercise_configs[exercise_id] = config
+        
+        # Sauvegarde de la configuration
+        self.save_exercise_config(config)
+        
+        return config
+    
+    def create_empty_assessment_config(self, assessment_id):
+        """
+        Crée une configuration d'évaluation vide avec l'ID spécifié.
+        
+        Args:
+            assessment_id (str): Identifiant de l'évaluation.
+            
+        Returns:
+            AssessmentConfig: Configuration vide de l'évaluation.
+        """
+        # Création d'un dictionnaire avec les valeurs par défaut
+        config_dict = {
+            'assessmentId': assessment_id,
+            'name': f'Évaluation {assessment_id}',
+            'exercises': [],
+            'totalMaxPoints': 0
+        }
+        
+        # Création de l'objet de configuration
+        config = AssessmentConfig(config_dict)
+        
+        # Ajout au cache
+        self.assessment_configs[assessment_id] = config
+        
+        # Sauvegarde de la configuration
+        self.save_assessment_config(config)
+        
+        return config 
