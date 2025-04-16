@@ -302,7 +302,7 @@ class ConfigLoader:
         # Création de l'objet de configuration
         config = AssessmentConfig(config_dict)
         
-        # Ajout au cache
+        # Ajout au cacheE
         self.assessment_configs[assessment_id] = config
         
         # Sauvegarde de la configuration

@@ -1,5 +1,5 @@
 """
-Module pour afficher la section "À propos".
+Module pour afficher la section "À propos  ".
 """
 
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 

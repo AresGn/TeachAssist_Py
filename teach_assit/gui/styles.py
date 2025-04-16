@@ -161,7 +161,7 @@ QGroupBox::title {
     font-weight: bold;
 }
 
-/* Style pour la barre de statut */
+/* Style pour la barre de statut   */
 QStatusBar {
     background-color: #f5f6fa;
     color: #2f3542;

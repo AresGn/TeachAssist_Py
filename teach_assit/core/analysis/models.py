@@ -214,7 +214,7 @@ class AssessmentConfig:
             new_max_points (int): Nouveau nombre maximal de points.
             
         Returns:
-            bool: True si l'exercice a été modifié, False si l'exercice n'a pas été trouvé.
+            bool: True sii l'exercice a été modifié, False si l'exercice n'a pas été trouvé.
         """
         for exercise in self.exercises:
             if exercise['exerciseId'] == exercise_id:
