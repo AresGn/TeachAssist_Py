@@ -1,0 +1,20 @@
+# Byte-compiled / optimized / DLL files 
+__pycache__/ 
+*.py[cod] 
+*$py.class 
+# Distribution / packaging 
+dist/ 
+build/ 
+*.egg-info/ 
+# Unit test / coverage reports 
+htmlcov/ 
+.tox/ 
+.coverage 
+.coverage.* 
+.pytest_cache/ 
+# Environments 
+venv/ 
+env/ 
+ENV/ 
+# Project specific 
+data/ 

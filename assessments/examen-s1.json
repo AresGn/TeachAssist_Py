@@ -1,0 +1,9 @@
+{
+  "assessmentId": "examen-s1",
+  "name": "Examen Semestre 1 - Java",
+  "exercises": [
+    { "exerciseId": "04-calcul-moyenne", "maxPoints": 10 },
+    { "exerciseId": "06-validation-age", "maxPoints": 10 }
+  ],
+  "totalMaxPoints": 20
+} 

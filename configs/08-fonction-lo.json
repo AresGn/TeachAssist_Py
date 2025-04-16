@@ -1,0 +1,29 @@
+{
+  "id": "08-fonction-lo",
+  "name": "Fonction Logarithme Népérien",
+  "description": " Implémenter une méthode qui calcule log(x). Gérer le domaine de définition (x > 0).",
+  "rules": {
+    "requiredMethods": [
+      {
+        "name": "logarithmeNeperien",
+        "params": [
+          "double"
+        ],
+        "returnType": "double"
+      }
+    ],
+    "customPatterns": [
+      {
+        "description": "Une vérification explicite pour x <= 0 est requise avant d'appeler Math.log.",
+        "errorMessage": "Le domaine de définition du logarithme (x > 0) n'est pas correctement géré. Ajoutez une condition pour x <= 0.",
+        "pattern": "if\\\\s*\\\\(\\\\s*x\\\\s*<=\\\\s*0\\\\s*\\\\)",
+        "required": true
+      },
+      {
+        "description": "Math.log requiert un argument strictement positif.",
+        "pattern": "Math\\\\.log\\\\s*\\\\(",
+        "required": true
+      }
+    ]
+  }
+}
