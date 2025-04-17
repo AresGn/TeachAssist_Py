@@ -14,6 +14,7 @@ from teach_assit.gui.results_widget import ResultsWidget
 from teach_assit.gui.about_widget import AboutWidget
 from teach_assit.utils.file_utils import SubmissionManager
 from teach_assit.core.analysis.config_loader import ConfigLoader
+from teach_assit.core.analysis.static_analyzer import StaticAnalyzer
 from teach_assit.gui.styles import MAIN_STYLE, TOOLBAR_STYLE, MENU_STYLE, SIDEBAR_STYLE
 
 
@@ -445,6 +446,7 @@ class MainWindow(QMainWindow):
                 background-color: #bdc3c7;
             }
         """)
+        self.analyze_button.clicked.connect(self.analyze_submissions)
         analyze_button_layout.addWidget(self.analyze_button)
         
         main_content_layout.addWidget(analyze_button_container)
@@ -733,4 +735,280 @@ class MainWindow(QMainWindow):
         # Mise à jour du statut
         has_submissions = len(student_folders) > 0
         assessment_id = self.assessment_combo.currentData()
-        self.analyze_button.setEnabled(has_submissions and assessment_id is not None) 
+        self.analyze_button.setEnabled(has_submissions and assessment_id is not None)
+    
+    def analyze_submissions(self):
+        """Analyser les soumissions d'étudiants avec l'analyseur statique."""
+        # Récupérer l'évaluation sélectionnée
+        assessment_id = self.assessment_combo.currentData()
+        if not assessment_id:
+            QMessageBox.warning(self, "Aucune évaluation", "Veuillez sélectionner une évaluation à analyser.")
+            return
+        
+        # Récupérer la configuration de l'évaluation
+        assessment = self.config_loader.get_assessment_config(assessment_id)
+        if not assessment:
+            QMessageBox.warning(self, "Erreur de configuration", "Configuration d'évaluation non trouvée.")
+            return
+        
+        # Récupérer les dossiers d'étudiants
+        student_folders = self.submission_manager.get_student_folders()
+        if not student_folders:
+            QMessageBox.warning(self, "Aucune soumission", "Aucune soumission extraite à analyser.")
+            return
+        
+        # Créer une boîte de dialogue de progression
+        progress = QProgressDialog("Analyse des soumissions en cours...", "Annuler", 0, len(student_folders), self)
+        progress.setWindowTitle("Analyse en cours")
+        progress.setWindowModality(Qt.WindowModal)
+        progress.show()
+        
+        # Créer l'analyseur statique
+        analyzer = StaticAnalyzer()
+        
+        # Dictionnaire pour stocker les résultats d'analyse
+        analysis_results = {}
+        
+        # Créer un dictionnaire de correspondance entre mots-clés et exercices
+        exercise_keywords = {}
+        for ex in assessment.exercises:
+            ex_id = ex.get('exerciseId', '')
+            if ex_id:
+                # Extraire des mots-clés de l'ID de l'exercice
+                # Par exemple, '02-intervalle' donne 'intervalle'
+                if '-' in ex_id:
+                    keyword = ex_id.split('-', 1)[1].lower()
+                else:
+                    keyword = ex_id.lower()
+                exercise_keywords[keyword] = ex_id
+        
+        # Analyser chaque soumission d'étudiant
+        student_count = 0
+        for student_name, info in student_folders.items():
+            if progress.wasCanceled():
+                break
+            
+            progress.setValue(student_count)
+            progress.setLabelText(f"Analyse des soumissions de {student_name}...")
+            
+            # Mise à jour de l'interface
+            QApplication.processEvents()
+            
+            # Récupérer les fichiers Java de l'étudiant
+            java_files = info.get('java_files', [])
+            student_dir = info.get('path', '')
+            student_results = {}
+            
+            # Analyser chaque fichier Java
+            for java_file in java_files:
+                file_path = os.path.join(student_dir, java_file)
+                
+                # Lire le contenu du fichier
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        code = f.read()
+                    
+                    # Déterminer l'exercice associé au fichier en utilisant les mots-clés
+                    exercise_id = None
+                    java_file_lower = java_file.lower()
+                    
+                    # Méthode 1: Correspondance directe avec l'ID d'exercice
+                    for ex in assessment.exercises:
+                        ex_id = ex.get('exerciseId', '')
+                        if ex_id and ex_id in java_file_lower:
+                            exercise_id = ex_id
+                            break
+                    
+                    # Méthode 2: Correspondance avec les mots-clés extraits
+                    if not exercise_id:
+                        for keyword, ex_id in exercise_keywords.items():
+                            if keyword in java_file_lower:
+                                exercise_id = ex_id
+                                break
+                            # Vérifier aussi si le keyword est dans le nom de base du fichier sans extension
+                            base_name = os.path.splitext(os.path.basename(java_file_lower))[0]
+                            if keyword in base_name:
+                                exercise_id = ex_id
+                                break
+                    
+                    # Méthode 3: Correspondance approfondie pour des cas spécifiques
+                    if not exercise_id:
+                        if "intervalle" in java_file_lower:
+                            for ex_id in exercise_keywords.values():
+                                if "intervalle" in ex_id:
+                                    exercise_id = ex_id
+                                    break
+                        elif "fonction" in java_file_lower or "log" in java_file_lower:
+                            for ex_id in exercise_keywords.values():
+                                if "fonction" in ex_id or "log" in ex_id:
+                                    exercise_id = ex_id
+                                    break
+                    
+                    # Si aucune correspondance, utiliser le premier exercice de l'évaluation
+                    if not exercise_id and assessment.exercises:
+                        exercise_id = assessment.exercises[0].get('exerciseId', '')
+                        print(f"Aucune correspondance trouvée pour {java_file}, utilisation de l'exercice par défaut: {exercise_id}")
+                    
+                    # Obtenir la configuration de l'exercice
+                    exercise_config = self.config_loader.get_exercise_config(exercise_id)
+                    if not exercise_config:
+                        student_results[java_file] = {
+                            'error': f"Configuration d'exercice '{exercise_id}' introuvable"
+                        }
+                        continue
+                    
+                    # Analyser le code
+                    result = analyzer.analyze_code(code, exercise_config)
+                    student_results[java_file] = result
+                    
+                except Exception as e:
+                    student_results[java_file] = {
+                        'error': f"Erreur lors de l'analyse: {str(e)}"
+                    }
+            
+            # Stocker les résultats pour cet étudiant
+            analysis_results[student_name] = student_results
+            student_count += 1
+        
+        # Fermer la boîte de dialogue de progression
+        progress.setValue(len(student_folders))
+        
+        # Mettre à jour l'interface avec les résultats d'analyse
+        self.update_analysis_results(analysis_results)
+        
+        # Préparer les configurations d'exercices pour l'affichage dans l'onglet Résultats
+        exercise_configs = {}
+        for ex in assessment.exercises:
+            ex_id = ex.get('exerciseId', '')
+            config = self.config_loader.get_exercise_config(ex_id)
+            if config:
+                exercise_configs[ex_id] = config
+        
+        # Mettre à jour l'onglet des résultats
+        self.results_tab.update_analysis_results(analysis_results, assessment.name, exercise_configs)
+        
+        # Basculer vers l'onglet des résultats pour afficher les résultats détaillés
+        self.switch_page(3)  # L'index de l'onglet Résultats
+        
+        # Message de confirmation
+        self.statusBar.showMessage(f"Analyse terminée pour {len(analysis_results)} soumission(s)")
+    
+    def update_analysis_results(self, analysis_results):
+        """Mettre à jour l'interface avec les résultats d'analyse."""
+        print(f"Mise à jour des résultats d'analyse pour {len(analysis_results)} étudiants")
+        
+        # Pour chaque étudiant, mettre à jour la ligne correspondante dans le tableau
+        for row in range(self.submission_table.rowCount()):
+            student_item = self.submission_table.item(row, 1)
+            if not student_item:
+                continue
+            
+            student_name = student_item.text().strip()
+            if student_name.startswith(" "):  # Supprimer l'espace ajouté pour l'icône
+                student_name = student_name[1:]
+            
+            # Récupérer les résultats d'analyse pour cet étudiant
+            student_results = analysis_results.get(student_name, {})
+            if not student_results:
+                print(f"Pas de résultats trouvés pour l'étudiant: {student_name}")
+                continue
+            else:
+                print(f"Résultats trouvés pour {student_name}: {len(student_results)} fichiers")
+            
+            # Mettre à jour l'affichage des fichiers Java dans la cellule
+            files_widget = self.submission_table.cellWidget(row, 2)
+            if not files_widget:
+                continue
+            
+            # Parcourir les containers de fichiers dans le widget principal
+            for i in range(files_widget.layout().count()):
+                file_container_item = files_widget.layout().itemAt(i)
+                if not file_container_item or not file_container_item.widget():
+                    continue
+                
+                # Container du fichier (QWidget)
+                file_container = file_container_item.widget()
+                if not isinstance(file_container, QWidget) or not file_container.layout():
+                    continue
+                
+                # Trouver le QLabel du nom de fichier dans le container
+                file_name_label = None
+                file_icon_label = None
+                
+                # Parcourir les éléments du container (icône + nom de fichier)
+                for j in range(file_container.layout().count()):
+                    widget_item = file_container.layout().itemAt(j)
+                    if not widget_item or not widget_item.widget():
+                        continue
+                    
+                    widget = widget_item.widget()
+                    if isinstance(widget, QLabel):
+                        # Le premier QLabel est l'icône, le second est le nom de fichier
+                        if file_icon_label is None:
+                            file_icon_label = widget
+                        else:
+                            file_name_label = widget
+                
+                # Vérifier si nous avons trouvé le label du fichier
+                if file_name_label and file_icon_label:
+                    file_text = file_name_label.text().strip()
+                    # Extraire juste le nom du fichier s'il contient un chemin
+                    if "\\" in file_text:
+                        file_text = file_text.split("\\")[-1]
+                    
+                    print(f"Vérification du fichier: {file_text}")
+                    
+                    # Vérifier si nous avons des résultats pour ce fichier
+                    for file_path, result in student_results.items():
+                        base_file_name = os.path.basename(file_path)
+                        if base_file_name == file_text or file_path.endswith(file_text):
+                            print(f"Correspondance trouvée: {file_path} → {file_text}")
+                            
+                            icon_name = "check-circle"
+                            text_color = "#2ecc71"  # vert
+                            tooltip = "Code valide"
+                            
+                            # Erreur d'analyse
+                            if 'error' in result:
+                                icon_name = "alert-triangle"
+                                text_color = "#e74c3c"  # rouge
+                                tooltip = result['error']
+                                print(f"Erreur d'analyse: {tooltip}")
+                            # Erreur de syntaxe
+                            elif result.get('syntax_errors', []):
+                                icon_name = "alert-circle"
+                                text_color = "#e74c3c"  # rouge
+                                errors = [f"Ligne {err['line']}: {err['message']}" for err in result['syntax_errors']]
+                                tooltip = "Erreurs de syntaxe:\n" + "\n".join(errors)
+                                print(f"Erreurs de syntaxe: {len(result['syntax_errors'])}")
+                            # Méthodes manquantes ou incorrectes
+                            elif result.get('missing_methods', []):
+                                icon_name = "alert-triangle"
+                                text_color = "#f39c12"  # orange
+                                methods = [f"{m['expected_return']} {m['name']}({', '.join(m['expected_params'])})" 
+                                          for m in result['missing_methods']]
+                                tooltip = "Méthodes manquantes ou incorrectes:\n" + "\n".join(methods)
+                                print(f"Méthodes manquantes: {len(result['missing_methods'])}")
+                            else:
+                                print("Code valide")
+                            
+                            # Mettre à jour l'icône
+                            file_icon_label.setPixmap(QIcon(f"icons/{icon_name}.svg").pixmap(24, 24))
+                            
+                            # Mettre à jour le style et le tooltip du label du nom de fichier
+                            file_name_label.setStyleSheet(f"color: {text_color}; font-size: 14px; padding: 5px; background-color: #f8f9fa; border-radius: 4px;")
+                            file_name_label.setToolTip(tooltip)
+                            break
+        
+        # Ajuster à nouveau la hauteur des lignes pour tenir compte des tooltips
+        for row in range(self.submission_table.rowCount()):
+            current_height = self.submission_table.rowHeight(row)
+            self.submission_table.setRowHeight(row, current_height)
+            
+        # Message informant l'utilisateur que l'analyse est terminée
+        QMessageBox.information(self, "Analyse terminée", 
+                               f"L'analyse de {len(analysis_results)} soumissions est terminée.\n"
+                               "✅ Vert: Code valide\n"
+                               "⚠️ Orange: Méthodes manquantes ou incorrectes\n"
+                               "❌ Rouge: Erreurs de syntaxe\n\n"
+                               "Survolez les fichiers pour voir les détails.") 

@@ -5,11 +5,7 @@
     {
       "exerciseId": "02-intervalle",
       "maxPoints": 10
-    },
-    {
-      "exerciseId": "08-fonction-log",
-      "maxPoints": 10
     }
   ],
-  "totalMaxPoints": 20
+  "totalMaxPoints": 10
 }

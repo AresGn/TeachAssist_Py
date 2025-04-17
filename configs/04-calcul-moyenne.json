@@ -27,7 +27,21 @@
       {
         "description": "La division doit être faite avec 3.0 pour assurer un résultat double.",
         "errorMessage": "Assurez-vous de diviser par 3.0 (et non 3) pour obtenir une moyenne précise (double).",
-        "pattern": "\\bdouble\\b.+=\\s*\\(.*\\)\\s*/\\s*3\\.0;"
+        "pattern": "\\bdouble\\b.+=\\s*\\(.*\\)\\s*/\\s*3\\.0;|return\\s+.*\\s*/\\s*3\\.0;",
+        "required": true
+      },
+      {
+        "description": "Utilisation incorrecte d'opérateurs non autorisés",
+        "errorMessage": "Vous ne devez utiliser que les opérateurs + et / pour ce calcul",
+        "pattern": "\\b[-*%]\\b",
+        "required": false,
+        "negative": true
+      },
+      {
+        "description": "Calcul correct avec la somme des trois variables",
+        "errorMessage": "Vous devez faire la somme des trois variables (a + b + c)",
+        "pattern": "a\\s*\\+\\s*b\\s*\\+\\s*c|somme\\s*=\\s*a\\s*\\+\\s*b\\s*\\+\\s*c",
+        "required": true
       }
     ],
     "requiredDomainChecks": [],

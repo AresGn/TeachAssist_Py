@@ -45,13 +45,13 @@
       {
         "description": "Message d'appartenance",
         "errorMessage": "Vous devez afficher un message indiquant si x appartient à I",
-        "pattern": "System\\.out\\.print.*appartient\\s+à\\s+I    ",
+        "pattern": "System\\.out\\.print.*appartient",
         "required": true
       },
       {
         "description": "Message de non-appartenance\"",
         "errorMessage": "Vous devez afficher un message indiquant si x n'appartient pas à I",
-        "pattern": "System\\.out\\.print.*n['']appartient\\s+pas\\s+à\\s+I  ",
+        "pattern": "System\\.out\\.print.*n['']appartient\\s+pas|System\\.out\\.print.*ne\\s+appartient\\s+pas",
         "required": true
       }
     ],

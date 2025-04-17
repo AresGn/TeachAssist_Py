@@ -1,0 +1,60 @@
+Found 3 Java files to analyze:
+
+==================================================
+✅ RAPPORT D'ANALYSE: tests/java_samples/TD1\Ares_GNIMAGNON\Intervalle.java (Étudiant: Ares_GNIMAGNON)
+==================================================
+
+✅ SYNTAXE: Code valide
+
+✅ MÉTHODES REQUISES:
+  ✅ main(String[]) -> void
+
+✅ MÉTHODES TROUVÉES (correspondant à la signature):
+  ✅ main(String[]) -> void
+
+✅ PATTERNS REQUIS:
+  ✅ Lecture de l'entrée utilisateur
+  ✅ Message d'appartenance
+  ✅ Message de non-appartenance"
+
+✅ RÉSULTAT GLOBAL: SUCCÈS
+
+==================================================
+✅ RAPPORT D'ANALYSE: tests/java_samples/TD1\Marc_AUREL\Intervalle.java (Étudiant: Marc_AUREL)
+==================================================
+
+❌ SYNTAXE: Code invalide
+  ❌ Ligne 0: 
+
+✅ MÉTHODES REQUISES:
+  ✅ main(String[]) -> void
+
+⚠️ AUCUNE MÉTHODE TROUVÉE avec signature correspondante.
+
+✅ PATTERNS REQUIS:
+  ✅ Lecture de l'entrée utilisateur
+  ✅ Message d'appartenance
+  ✅ Message de non-appartenance"
+
+❌ RÉSULTAT GLOBAL: DES PROBLÈMES ONT ÉTÉ DÉTECTÉS
+  Détail des problèmes:
+    ❌ Problèmes de syntaxe
+
+==================================================
+✅ RAPPORT D'ANALYSE: tests/java_samples/TD1\SOSSOU_Jean\Intervalle.java (Étudiant: SOSSOU_Jean)
+==================================================
+
+✅ SYNTAXE: Code valide
+
+✅ MÉTHODES REQUISES:
+  ✅ main(String[]) -> void
+
+✅ MÉTHODES TROUVÉES (correspondant à la signature):
+  ✅ main(String[]) -> void
+
+✅ PATTERNS REQUIS:
+  ✅ Lecture de l'entrée utilisateur
+  ✅ Message d'appartenance
+  ✅ Message de non-appartenance"
+
+✅ RÉSULTAT GLOBAL: SUCCÈS

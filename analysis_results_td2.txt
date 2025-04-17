@@ -1,0 +1,82 @@
+Found 4 Java files to analyze:
+
+==================================================
+✅ RAPPORT D'ANALYSE: tests/java_samples/TD2\code-correcte-alternative.java (Étudiant: TD2)
+==================================================
+
+✅ SYNTAXE: Code valide
+
+✅ MÉTHODES REQUISES:
+  ✅ calculerMoyenne(int, int, int) -> double
+
+✅ MÉTHODES TROUVÉES (correspondant à la signature):
+  ✅ calculerMoyenne(int, int, int) -> double
+
+✅ PATTERNS REQUIS:
+  ✅ La division doit être faite avec 3.0 pour assurer un résultat double.
+  ✅ Calcul correct avec la somme des trois variables
+
+✅ RÉSULTAT GLOBAL: SUCCÈS
+
+==================================================
+✅ RAPPORT D'ANALYSE: tests/java_samples/TD2\code-correcte.java (Étudiant: TD2)
+==================================================
+
+✅ SYNTAXE: Code valide
+
+✅ MÉTHODES REQUISES:
+  ✅ calculerMoyenne(int, int, int) -> double
+
+✅ MÉTHODES TROUVÉES (correspondant à la signature):
+  ✅ calculerMoyenne(int, int, int) -> double
+
+✅ PATTERNS REQUIS:
+  ✅ La division doit être faite avec 3.0 pour assurer un résultat double.
+  ✅ Calcul correct avec la somme des trois variables
+
+✅ RÉSULTAT GLOBAL: SUCCÈS
+
+==================================================
+✅ RAPPORT D'ANALYSE: tests/java_samples/TD2\code-erreur-syntaxe.java (Étudiant: TD2)
+==================================================
+
+❌ SYNTAXE: Code invalide
+  ❌ Ligne 0: 
+
+❌ MÉTHODES REQUISES:
+  ❌ calculerMoyenne(int, int, int) -> double
+  ❌ Mauvais nom de méthode trouvé: 'moyenneCalcul' (attendu: 'calculerMoyenne')
+
+⚠️ AUCUNE MÉTHODE TROUVÉE avec signature correspondante.
+
+⚠️ PATTERNS REQUIS:
+  ❌ La division doit être faite avec 3.0 pour assurer un résultat double.
+      ⚠️ Assurez-vous de diviser par 3.0 (et non 3) pour obtenir une moyenne précise (double).
+  ✅ Calcul correct avec la somme des trois variables
+
+❌ RÉSULTAT GLOBAL: DES PROBLÈMES ONT ÉTÉ DÉTECTÉS
+  Détail des problèmes:
+    ❌ Problèmes de syntaxe
+    ❌ Noms de méthodes incorrects
+    ❌ Patterns requis manquants
+
+==================================================
+✅ RAPPORT D'ANALYSE: tests/java_samples/TD2\code-mauvais-operateur.java (Étudiant: TD2)
+==================================================
+
+✅ SYNTAXE: Code valide
+
+✅ MÉTHODES REQUISES:
+  ✅ calculerMoyenne(int, int, int) -> double
+
+✅ MÉTHODES TROUVÉES (correspondant à la signature):
+  ✅ calculerMoyenne(int, int, int) -> double
+
+⚠️ PATTERNS REQUIS:
+  ✅ La division doit être faite avec 3.0 pour assurer un résultat double.
+  ❌ Calcul correct avec la somme des trois variables
+      ⚠️ Vous devez faire la somme des trois variables (a + b + c)
+
+❌ RÉSULTAT GLOBAL: DES PROBLÈMES ONT ÉTÉ DÉTECTÉS
+  Détail des problèmes:
+    ❌ Patterns requis manquants

@@ -1,0 +1,11 @@
+{
+  "assessmentId": "TD2",
+  "name": "Évaluation TD2",
+  "exercises": [
+    {
+      "exerciseId": "04-calcul-moyenne",
+      "maxPoints": 10
+    }
+  ],
+  "totalMaxPoints": 10
+}
