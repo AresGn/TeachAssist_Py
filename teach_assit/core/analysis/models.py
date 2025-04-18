@@ -1,19 +1,20 @@
 class ExerciseConfig:
     """Représente la configuration d'un exercice."""
     
-    def __init__(self, config_dict=None):
+    def __init__(self, config_dict):
         """
         Initialise une configuration d'exercice à partir d'un dictionnaire.
         
         Args:
-            config_dict (dict): Dictionnaire contenant la configuration de l'exercice.
+            config_dict (dict): Dictionnaire de configuration de l'exercice.
         """
-        if config_dict is None:
-            config_dict = {}
-            
         self.id = config_dict.get('id', '')
         self.name = config_dict.get('name', '')
         self.description = config_dict.get('description', '')
+        self.difficulty = config_dict.get('difficulty', 1)
+        self.max_points = config_dict.get('maxPoints', 10)
+        
+        # Règles de vérification
         self.rules = config_dict.get('rules', {})
     
     def to_dict(self):

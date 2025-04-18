@@ -1,0 +1,60 @@
+{
+  "id": "10-comptage-mots",
+  "name": "Comptage de Mots",
+  "description": "Écrire une méthode qui compte le nombre de mots dans une chaîne de caractères. Les mots sont séparés par des espaces, des tabulations ou des retours à la ligne.",
+  "rules": {
+    "requiredMethods": [
+      {
+        "name": "compterMots",
+        "params": [
+          "String"
+        ],
+        "returnType": "int"
+      }
+    ],
+    "allowedOperators": [
+      "==",
+      "!=",
+      "+",
+      "++",
+      "+=",
+      "||"
+    ],
+    "requiredControlStructures": [
+      "for",
+      "if"
+    ],
+    "checkVariableScope": true,
+    "checkNamingConventions": [
+      "camelCase"
+    ],
+    "customPatterns": [
+      {
+        "description": "Gestion des chaînes vides ou nulles",
+        "errorMessage": "Vous devez vérifier si la chaîne est vide ou null avant de traiter.",
+        "pattern": "if\\s*\\(\\s*(texte\\s*==\\s*null|texte\\.isEmpty\\(\\)|texte\\.length\\(\\)\\s*==\\s*0)\\s*(\\|\\||&&)?\\s*(texte\\s*==\\s*null|texte\\.isEmpty\\(\\)|texte\\.length\\(\\)\\s*==\\s*0)?\\s*\\)",
+        "required": true
+      },
+      {
+        "description": "Utilisation de split ou StringTokenizer",
+        "errorMessage": "Vous devriez utiliser split() ou StringTokenizer pour découper la chaîne en mots.",
+        "pattern": "\\.split\\s*\\(|StringTokenizer",
+        "required": true
+      },
+      {
+        "description": "Trim de la chaîne avant traitement",
+        "errorMessage": "Il est recommandé de supprimer les espaces en début et fin de chaîne avant traitement.",
+        "pattern": "\\.trim\\s*\\(\\s*\\)",
+        "required": false
+      }
+    ],
+    "requiredDomainChecks": [
+      {
+        "description": "Chaîne non nulle",
+        "condition": "texte != null",
+        "errorMessage": "La chaîne ne peut pas être null."
+      }
+    ],
+    "mathFunctions": []
+  }
+} 

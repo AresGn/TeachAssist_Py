@@ -1,0 +1,15 @@
+{
+  "assessmentId": "TD3",
+  "name": "Travaux Dirigés 3",
+  "exercises": [
+    {
+      "exerciseId": "09-fonction-racine-carree",
+      "maxPoints": 10
+    },
+    {
+      "exerciseId": "10-comptage-mots",
+      "maxPoints": 10
+    }
+  ],
+  "totalMaxPoints": 20
+} 

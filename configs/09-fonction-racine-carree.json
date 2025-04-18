@@ -1,0 +1,64 @@
+{
+  "id": "09-fonction-racine-carree",
+  "name": "Fonction Racine Carrée",
+  "description": "Écrire une méthode qui calcule la racine carrée d'un nombre en vérifiant que le nombre est positif ou nul.",
+  "rules": {
+    "requiredMethods": [
+      {
+        "name": "calculerRacineCarree",
+        "params": [
+          "double"
+        ],
+        "returnType": "double"
+      }
+    ],
+    "allowedOperators": [
+      "<",
+      ">=",
+      "<=",
+      ">",
+      "=="
+    ],
+    "requiredControlStructures": [
+      "if"
+    ],
+    "checkVariableScope": true,
+    "checkNamingConventions": [
+      "camelCase"
+    ],
+    "customPatterns": [
+      {
+        "description": "Vérification que le nombre est positif ou nul",
+        "errorMessage": "Vous devez vérifier que le nombre est positif ou nul avant de calculer la racine carrée.",
+        "pattern": "if\\s*\\(\\s*nombre\\s*<\\s*0\\s*\\)|if\\s*\\(\\s*nombre\\s*<\\s*0\\.0\\s*\\)",
+        "required": true
+      },
+      {
+        "description": "Utilisation de Math.sqrt",
+        "errorMessage": "Vous devez utiliser la méthode Math.sqrt pour calculer la racine carrée.",
+        "pattern": "Math\\.sqrt\\s*\\(\\s*nombre\\s*\\)",
+        "required": true
+      },
+      {
+        "description": "Gestion du cas où le nombre est négatif",
+        "errorMessage": "Vous devez gérer le cas où le nombre est négatif en renvoyant une valeur spéciale ou en levant une exception.",
+        "pattern": "return\\s+(-1\\.0|Double\\.NaN)|throw\\s+new\\s+\\w+Exception",
+        "required": true
+      }
+    ],
+    "requiredDomainChecks": [
+      {
+        "description": "Nombre positif ou nul",
+        "condition": "nombre >= 0",
+        "errorMessage": "La racine carrée n'est définie que pour les nombres positifs ou nuls."
+      }
+    ],
+    "mathFunctions": [
+      "Math.sqrt"
+    ],
+    "exceptionHandling": {
+      "requiredTryCatch": false,
+      "specificExceptions": []
+    }
+  }
+} 
