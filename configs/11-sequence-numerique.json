@@ -1,0 +1,63 @@
+{
+  "id": "11-sequence-numerique",
+  "name": "Séquence Numérique",
+  "description": "Écrire un programme qui affiche des séquences numériques selon différents modèles.",
+  "rules": {
+    "requiredMethods": [
+      {
+        "name": "afficherLigne",
+        "params": [],
+        "returnType": "void"
+      },
+      {
+        "name": "afficherTriangle",
+        "params": [],
+        "returnType": "void"
+      }
+    ],
+    "allowedOperators": [
+      "+",
+      "<=",
+      "<",
+      "="
+    ],
+    "requiredControlStructures": [
+      "for"
+    ],
+    "checkVariableScope": true,
+    "checkNamingConventions": [
+      "camelCase"
+    ],
+    "customPatterns": [
+      {
+        "description": "Boucle for pour affichage en ligne",
+        "errorMessage": "Vous devez utiliser une boucle for pour afficher les chiffres de 1 à 9 en ligne.",
+        "pattern": "for\\s*\\(\\s*(int|var)\\s+\\w+\\s*=\\s*1\\s*;\\s*\\w+\\s*(<|<=)\\s*9\\s*;\\s*\\w+\\+\\+\\s*\\)",
+        "required": true
+      },
+      {
+        "description": "Utilisation de System.out.print pour l'affichage en ligne",
+        "errorMessage": "Vous devez utiliser System.out.print pour afficher les chiffres sans saut de ligne.",
+        "pattern": "System\\.out\\.print\\s*\\(\\s*\\w+\\s*\\)",
+        "required": true
+      },
+      {
+        "description": "Boucles imbriquées pour le triangle",
+        "errorMessage": "Vous devez utiliser des boucles for imbriquées pour créer le triangle numérique.",
+        "pattern": "for\\s*\\(\\s*(int|var)\\s+\\w+\\s*=\\s*1\\s*;\\s*\\w+\\s*(<|<=)\\s*9\\s*;\\s*\\w+\\+\\+\\s*\\)\\s*\\{[\\s\\S]*?for\\s*\\(",
+        "required": true
+      },
+      {
+        "description": "Ajout d'un saut de ligne après chaque ligne du triangle",
+        "errorMessage": "Vous devez ajouter un saut de ligne après chaque ligne du triangle avec System.out.println().",
+        "pattern": "System\\.out\\.println\\(\\s*\\)",
+        "required": true
+      }
+    ],
+    "mathFunctions": [],
+    "exceptionHandling": {
+      "requiredTryCatch": false,
+      "specificExceptions": []
+    }
+  }
+} 

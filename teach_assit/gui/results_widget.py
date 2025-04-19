@@ -454,6 +454,11 @@ class ResultsWidget(QWidget):
                     result_layout.setContentsMargins(5, 5, 5, 5)  # Réduire les marges
                     result_layout.setAlignment(Qt.AlignCenter)  # Centrer le contenu
                     
+                    # Titre de l'exercice dans la colonne Résultat
+                    exercise_name_label = QLabel(exercise_name)
+                    exercise_name_label.setStyleSheet("font-weight: bold; font-size: 12px; color: #2c3e50;")
+                    result_layout.addWidget(exercise_name_label)
+                    
                     # Texte du résultat global
                     result_color = "#2ecc71" if all_ok else "#e74c3c"
                     result_text = QLabel(f"{passed_checks}/{total_checks} vérifications - {estimated_score}/{max_points} pt")
@@ -465,9 +470,20 @@ class ResultsWidget(QWidget):
                     # Widget pour les actions (bouton détails)
                     actions_widget = QWidget()
                     actions_widget.setStyleSheet(row_style)
-                    actions_layout = QHBoxLayout(actions_widget)
+                    actions_layout = QVBoxLayout(actions_widget)
                     actions_layout.setContentsMargins(5, 5, 5, 5)  # Réduire les marges
-                    actions_layout.setAlignment(Qt.AlignCenter)  # Centrer le bouton
+                    
+                    # Label pour indiquer l'exercice dans la colonne Actions
+                    exercise_label = QLabel(exercise_name)
+                    exercise_label.setStyleSheet("font-weight: bold; font-size: 12px; color: #2c3e50; margin-bottom: 5px;")
+                    exercise_label.setAlignment(Qt.AlignCenter)
+                    actions_layout.addWidget(exercise_label)
+                    
+                    # Container pour le bouton
+                    button_container = QWidget()
+                    button_layout = QHBoxLayout(button_container)
+                    button_layout.setContentsMargins(0, 0, 0, 0)
+                    button_layout.setAlignment(Qt.AlignCenter)
                     
                     # Bouton détails
                     details_button = QPushButton("Détails")
@@ -491,8 +507,8 @@ class ResultsWidget(QWidget):
                     details_button.clicked.connect(lambda checked, data=details_data, title=f"{student} - {file_name}": 
                                                  self.show_details_dialog(title, data))
                     
-                    actions_layout.addWidget(details_button)
-                    actions_layout.addStretch()
+                    button_layout.addWidget(details_button)
+                    actions_layout.addWidget(button_container)
                     
                     self.results_table.setCellWidget(row_index, 4, actions_widget)
                     

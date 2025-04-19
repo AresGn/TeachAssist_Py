@@ -1,0 +1,15 @@
+{
+  "assessmentId": "TD4",
+  "name": "Travaux Dirigés 4",
+  "exercises": [
+    {
+      "exerciseId": "11-sequence-numerique",
+      "maxPoints": 10
+    },
+    {
+      "exerciseId": "12-triangle-isocele",
+      "maxPoints": 10
+    }
+  ],
+  "totalMaxPoints": 20
+} 

@@ -33,9 +33,9 @@
       {
         "description": "Utilisation incorrecte d'opérateurs non autorisés",
         "errorMessage": "Vous ne devez utiliser que les opérateurs + et / pour ce calcul",
+        "negative": true,
         "pattern": "\\b[-*%]\\b",
-        "required": false,
-        "negative": true
+        "required": false
       },
       {
         "description": "Calcul correct avec la somme des trois variables",
