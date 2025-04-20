@@ -2,6 +2,11 @@
   "id": "04-calcul-moyenne",
   "name": "Calcul de Moyenne",
   "description": "Écrire une méthode qui prend trois entiers en paramètre et retourne leur moyenne (en double).",
+  "testInputs": [
+    {"value": "10 20 30", "description": "Nombres simples"},
+    {"value": "5 7 9", "description": "Nombres impairs"},
+    {"value": "0 100 50", "description": "Avec zéro"}
+  ],
   "rules": {
     "requiredMethods": [
       {

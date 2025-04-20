@@ -2,6 +2,11 @@
   "id": "12-triangle-isocele",
   "name": "Triangle Isocèle d'Étoiles",
   "description": "Créer un programme qui affiche un triangle isocèle formé d'étoiles (*) dont le nombre de lignes est saisi par l'utilisateur.",
+  "testInputs": [
+    {"value": "7", "description": "Petit triangle"},
+    {"value": "8", "description": "Triangle moyen"},
+    {"value": "12", "description": "Grand triangle"}
+  ],
   "rules": {
     "requiredMethods": [
       {

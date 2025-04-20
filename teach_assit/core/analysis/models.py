@@ -13,6 +13,7 @@ class ExerciseConfig:
         self.description = config_dict.get('description', '')
         self.difficulty = config_dict.get('difficulty', 1)
         self.max_points = config_dict.get('maxPoints', 10)
+        self.test_inputs = config_dict.get('testInputs', [])
         
         # Règles de vérification
         self.rules = config_dict.get('rules', {})
@@ -28,6 +29,7 @@ class ExerciseConfig:
             'id': self.id,
             'name': self.name,
             'description': self.description,
+            'testInputs': self.test_inputs,
             'rules': self.rules
         }
     
@@ -115,6 +117,19 @@ class ExerciseConfig:
             exception_handling (dict): Paramètres de gestion des exceptions.
         """
         self.rules['exceptionHandling'] = exception_handling
+    
+    def get_test_inputs(self):
+        """Retourne la liste des entrées de test."""
+        return self.test_inputs
+    
+    def set_test_inputs(self, test_inputs):
+        """
+        Définit la liste des entrées de test.
+        
+        Args:
+            test_inputs (list): Liste des entrées de test.
+        """
+        self.test_inputs = test_inputs
 
 
 class AssessmentConfig:

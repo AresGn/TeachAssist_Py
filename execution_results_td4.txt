@@ -1,0 +1,283 @@
+Trouvé 8 fichiers Java à exécuter:
+
+==================================================
+ℹ️ RAPPORT D'EXÉCUTION: tests/java_samples/TD4\ARES\sequence-numerique-erreur.java (Étudiant: ARES)
+==================================================
+ℹ️ Classe principale détectée: SequenceNumeriqueAvecErreur
+⚠️ Nom de fichier (sequence-numerique-erreur.java) ne correspond pas au nom de classe (SequenceNumeriqueAvecErreur)
+ℹ️ Fichier corrigé créé: C:\Users\Arès GNIMAGNON\Documents\Soutenance\TeachAssist\TeachAssit_Python\temp_fixed_files\SequenceNumeriqueAvecErreur.java
+ℹ️ Exercice identifié: Séquence Numérique (11-sequence-numerique)
+  Description: Écrire un programme qui affiche des séquences numériques selon différents modèles.
+ℹ️ Exécution avec 1 entrées de test: []
+
+✅ Exécution sans entrée (): SUCCÈS
+  Sortie standard:
+Affichage en ligne:
+
+Affichage en triangle:
+1
+12
+123
+1234
+12345
+123456
+1234567
+12345678
+123456789
+
+
+✅ RÉSULTAT GLOBAL: TOUS LES TESTS RÉUSSIS
+
+==================================================
+ℹ️ RAPPORT D'EXÉCUTION: tests/java_samples/TD4\ARES\triangle-isocele3.java (Étudiant: ARES)
+==================================================
+ℹ️ Classe principale détectée: Exercice2
+⚠️ Nom de fichier (triangle-isocele3.java) ne correspond pas au nom de classe (Exercice2)
+ℹ️ Fichier corrigé créé: C:\Users\Arès GNIMAGNON\Documents\Soutenance\TeachAssist\TeachAssit_Python\temp_fixed_files\Exercice2.java
+ℹ️ Exercice identifié: Triangle Isocèle d'Étoiles (12-triangle-isocele)
+  Description: Créer un programme qui affiche un triangle isocèle formé d'étoiles (*) dont le nombre de lignes est saisi par l'utilisateur.
+ℹ️ Exécution avec 3 entrées de test: [3], [5], [10]
+
+✅ Test #1 (3): SUCCÈS
+  Sortie standard:
+Entrez n:   **
+ ****
+******
+
+
+✅ Test #2 (5): SUCCÈS
+  Sortie standard:
+Entrez n:     **
+   ****
+  ******
+ ********
+**********
+
+
+✅ Test #3 (10): SUCCÈS
+  Sortie standard:
+Entrez n:          **
+        ****
+       ******
+      ********
+     **********
+    ************
+   **************
+  ****************
+ ******************
+********************
+
+
+✅ RÉSULTAT GLOBAL: TOUS LES TESTS RÉUSSIS
+
+==================================================
+ℹ️ RAPPORT D'EXÉCUTION: tests/java_samples/TD4\CARLOS\sequence-numerique-do-while.java (Étudiant: CARLOS)
+==================================================
+ℹ️ Classe principale détectée: SequenceNumeriqueDoWhile
+⚠️ Nom de fichier (sequence-numerique-do-while.java) ne correspond pas au nom de classe (SequenceNumeriqueDoWhile)
+ℹ️ Fichier corrigé créé: C:\Users\Arès GNIMAGNON\Documents\Soutenance\TeachAssist\TeachAssit_Python\temp_fixed_files\SequenceNumeriqueDoWhile.java
+ℹ️ Exercice identifié: Séquence Numérique (11-sequence-numerique)
+  Description: Écrire un programme qui affiche des séquences numériques selon différents modèles.
+ℹ️ Exécution avec 1 entrées de test: []
+
+✅ Exécution sans entrée (): SUCCÈS
+  Sortie standard:
+Affichage en ligne:
+123456789
+Affichage en triangle:
+1
+12
+123
+1234
+12345
+123456
+1234567
+12345678
+123456789
+
+
+✅ RÉSULTAT GLOBAL: TOUS LES TESTS RÉUSSIS
+
+==================================================
+ℹ️ RAPPORT D'EXÉCUTION: tests/java_samples/TD4\CARLOS\triangle-isocele.java (Étudiant: CARLOS)
+==================================================
+ℹ️ Classe principale détectée: TriangleIsocele
+⚠️ Nom de fichier (triangle-isocele.java) ne correspond pas au nom de classe (TriangleIsocele)
+ℹ️ Fichier corrigé créé: C:\Users\Arès GNIMAGNON\Documents\Soutenance\TeachAssist\TeachAssit_Python\temp_fixed_files\TriangleIsocele.java
+ℹ️ Exercice identifié: Triangle Isocèle d'Étoiles (12-triangle-isocele)
+  Description: Créer un programme qui affiche un triangle isocèle formé d'étoiles (*) dont le nombre de lignes est saisi par l'utilisateur.
+ℹ️ Exécution avec 3 entrées de test: [3], [5], [10]
+
+✅ Test #1 (3): SUCCÈS
+  Sortie standard:
+Entrez le nombre de lignes du triangle:   *
+ ***
+*****
+
+
+✅ Test #2 (5): SUCCÈS
+  Sortie standard:
+Entrez le nombre de lignes du triangle:     *
+   ***
+  *****
+ *******
+*********
+
+
+✅ Test #3 (10): SUCCÈS
+  Sortie standard:
+Entrez le nombre de lignes du triangle:          *
+        ***
+       *****
+      *******
+     *********
+    ***********
+   *************
+  ***************
+ *****************
+*******************
+
+
+✅ RÉSULTAT GLOBAL: TOUS LES TESTS RÉUSSIS
+
+==================================================
+ℹ️ RAPPORT D'EXÉCUTION: tests/java_samples/TD4\KARL\sequence-numerique.java (Étudiant: KARL)
+==================================================
+ℹ️ Classe principale détectée: SequenceNumerique
+⚠️ Nom de fichier (sequence-numerique.java) ne correspond pas au nom de classe (SequenceNumerique)
+ℹ️ Fichier corrigé créé: C:\Users\Arès GNIMAGNON\Documents\Soutenance\TeachAssist\TeachAssit_Python\temp_fixed_files\SequenceNumerique.java
+ℹ️ Exercice identifié: Séquence Numérique (11-sequence-numerique)
+  Description: Écrire un programme qui affiche des séquences numériques selon différents modèles.
+ℹ️ Exécution avec 1 entrées de test: []
+
+✅ Exécution sans entrée (): SUCCÈS
+  Sortie standard:
+Affichage en ligne:
+123456789
+
+Affichage en triangle:
+1
+12
+123
+1234
+12345
+123456
+1234567
+12345678
+123456789
+
+
+✅ RÉSULTAT GLOBAL: TOUS LES TESTS RÉUSSIS
+
+==================================================
+ℹ️ RAPPORT D'EXÉCUTION: tests/java_samples/TD4\KARL\triangle-isocele1.java (Étudiant: KARL)
+==================================================
+ℹ️ Classe principale détectée: Exercice2
+⚠️ Nom de fichier (triangle-isocele1.java) ne correspond pas au nom de classe (Exercice2)
+ℹ️ Fichier corrigé créé: C:\Users\Arès GNIMAGNON\Documents\Soutenance\TeachAssist\TeachAssit_Python\temp_fixed_files\Exercice2.java
+ℹ️ Exercice identifié: Triangle Isocèle d'Étoiles (12-triangle-isocele)
+  Description: Créer un programme qui affiche un triangle isocèle formé d'étoiles (*) dont le nombre de lignes est saisi par l'utilisateur.
+ℹ️ Exécution avec 3 entrées de test: [3], [5], [10]
+
+✅ Test #1 (3): SUCCÈS
+  Sortie standard:
+Entrez n:   *
+ ***
+*****
+
+
+✅ Test #2 (5): SUCCÈS
+  Sortie standard:
+Entrez n:     *
+   ***
+  *****
+ *******
+*********
+
+
+✅ Test #3 (10): SUCCÈS
+  Sortie standard:
+Entrez n:          *
+        ***
+       *****
+      *******
+     *********
+    ***********
+   *************
+  ***************
+ *****************
+*******************
+
+
+✅ RÉSULTAT GLOBAL: TOUS LES TESTS RÉUSSIS
+
+==================================================
+ℹ️ RAPPORT D'EXÉCUTION: tests/java_samples/TD4\SARAH\sequence-numerique-while.java (Étudiant: SARAH)
+==================================================
+ℹ️ Classe principale détectée: SequenceNumeriqueWhile
+⚠️ Nom de fichier (sequence-numerique-while.java) ne correspond pas au nom de classe (SequenceNumeriqueWhile)
+ℹ️ Fichier corrigé créé: C:\Users\Arès GNIMAGNON\Documents\Soutenance\TeachAssist\TeachAssit_Python\temp_fixed_files\SequenceNumeriqueWhile.java
+ℹ️ Exercice identifié: Séquence Numérique (11-sequence-numerique)
+  Description: Écrire un programme qui affiche des séquences numériques selon différents modèles.
+ℹ️ Exécution avec 1 entrées de test: []
+
+✅ Exécution sans entrée (): SUCCÈS
+  Sortie standard:
+Affichage en ligne:
+123456789
+
+Affichage en triangle:
+1
+12
+123
+1234
+12345
+123456
+1234567
+12345678
+123456789
+
+
+✅ RÉSULTAT GLOBAL: TOUS LES TESTS RÉUSSIS
+
+==================================================
+ℹ️ RAPPORT D'EXÉCUTION: tests/java_samples/TD4\SARAH\triangle-isocele2.java (Étudiant: SARAH)
+==================================================
+ℹ️ Classe principale détectée: Exercice2
+⚠️ Nom de fichier (triangle-isocele2.java) ne correspond pas au nom de classe (Exercice2)
+ℹ️ Fichier corrigé créé: C:\Users\Arès GNIMAGNON\Documents\Soutenance\TeachAssist\TeachAssit_Python\temp_fixed_files\Exercice2.java
+ℹ️ Exercice identifié: Triangle Isocèle d'Étoiles (12-triangle-isocele)
+  Description: Créer un programme qui affiche un triangle isocèle formé d'étoiles (*) dont le nombre de lignes est saisi par l'utilisateur.
+ℹ️ Exécution avec 3 entrées de test: [3], [5], [10]
+
+✅ Test #1 (3): SUCCÈS
+  Sortie standard:
+Entrez n:   *
+ ***
+*****
+
+
+✅ Test #2 (5): SUCCÈS
+  Sortie standard:
+Entrez n:     *
+   ***
+  *****
+ *******
+*********
+
+
+✅ Test #3 (10): SUCCÈS
+  Sortie standard:
+Entrez n:          *
+        ***
+       *****
+      *******
+     *********
+    ***********
+   *************
+  ***************
+ *****************
+*******************
+
+
+✅ RÉSULTAT GLOBAL: TOUS LES TESTS RÉUSSIS
