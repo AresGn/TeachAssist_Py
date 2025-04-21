@@ -2,6 +2,12 @@
   "id": "06-validation-age",
   "name": "Validation d'Âge",
   "description": "Écrire une méthode qui prend un âge (int) et retourne true si la personne est majeure (18 ans ou plus), false sinon.",
+  "testInputs": [
+    {"value": "17", "description": "Âge mineur (retourne false)"},
+    {"value": "18", "description": "Âge limite (retourne true)"},
+    {"value": "25", "description": "Âge majeur (retourne true)"},
+    {"value": "-5", "description": "Âge invalide (à gérer)"}
+  ],
   "rules": {
     "requiredMethods": [
       {

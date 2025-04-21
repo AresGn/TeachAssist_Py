@@ -2,6 +2,7 @@
   "id": "09-fonction-racine-carree",
   "name": "Fonction Racine Carrée",
   "description": "Écrire une méthode qui calcule la racine carrée d'un nombre en vérifiant que le nombre est positif ou nul.",
+  "testInputs": [],
   "rules": {
     "requiredMethods": [
       {
@@ -48,17 +49,21 @@
     ],
     "requiredDomainChecks": [
       {
-        "description": "Nombre positif ou nul",
         "condition": "nombre >= 0",
+        "description": "Nombre positif ou nul",
         "errorMessage": "La racine carrée n'est définie que pour les nombres positifs ou nuls."
       }
     ],
     "mathFunctions": [
-      "Math.sqrt"
+      {
+        "name": "Math.sqrt",
+        "params": []
+      }
     ],
     "exceptionHandling": {
       "requiredTryCatch": false,
       "specificExceptions": []
     }
-  }
-} 
+  },
+  "grading_criteria": []
+}

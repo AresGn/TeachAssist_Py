@@ -5,7 +5,10 @@
   "testInputs": [
     {"value": "10 20 30", "description": "Nombres simples"},
     {"value": "5 7 9", "description": "Nombres impairs"},
-    {"value": "0 100 50", "description": "Avec zéro"}
+    {"value": "0 100 50", "description": "Avec zéro"},
+    {"value": "-10 10 0", "description": "Avec négatif"},
+    {"value": "1000000 2000000 3000000", "description": "Grands nombres"},
+    {"value": "1 1 1", "description": "Nombres identiques"}
   ],
   "rules": {
     "requiredMethods": [

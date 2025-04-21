@@ -3,9 +3,18 @@
   "name": "Triangle Isocèle d'Étoiles",
   "description": "Créer un programme qui affiche un triangle isocèle formé d'étoiles (*) dont le nombre de lignes est saisi par l'utilisateur.",
   "testInputs": [
-    {"value": "7", "description": "Petit triangle"},
-    {"value": "8", "description": "Triangle moyen"},
-    {"value": "12", "description": "Grand triangle"}
+    {
+      "value": "7",
+      "description": "Petit triangle"
+    },
+    {
+      "value": "8",
+      "description": "Triangle moyen"
+    },
+    {
+      "value": "12",
+      "description": "Grand triangle"
+    }
   ],
   "rules": {
     "requiredMethods": [
@@ -70,10 +79,81 @@
         "required": true
       }
     ],
-    "mathFunctions": [],
     "exceptionHandling": {
       "requiredTryCatch": false,
       "specificExceptions": []
     }
-  }
-} 
+  },
+  "grading_criteria": [
+    {
+      "description": "Gestion de la saisie utilisateur",
+      "points": 4,
+      "subcriteria": [
+        {
+          "text": "Utilisation correcte de Scanner pour lire l'entrée"
+        },
+        {
+          "text": "Validation que le nombre est positif"
+        },
+        {
+          "text": "Message explicatif pour l'utilisateur"
+        }
+      ],
+      "title": "Saisie et validation des données"
+    },
+    {
+      "description": "Implémentation correcte de l'algorithme de dessin",
+      "points": 6,
+      "subcriteria": [
+        {
+          "text": "Calcul correct du nombre d'espaces par ligne"
+        },
+        {
+          "text": "Calcul correct du nombre d'étoiles par ligne (progression impaire)"
+        },
+        {
+          "text": "Utilisation appropriée des boucles imbriquées"
+        },
+        {
+          "text": "Respect de la forme isocèle"
+        }
+      ],
+      "title": "Algorithme de dessin du triangle"
+    },
+    {
+      "description": "Organisation et qualité du code",
+      "points": 6,
+      "subcriteria": [
+        {
+          "text": "Organisation logique et claire (2 points)"
+        },
+        {
+          "text": "Respect des conventions de nommage camelCase (2 points)"
+        },
+        {
+          "text": "Gestion des cas d'erreur (2 points)"
+        }
+      ],
+      "title": "Structure et style de code"
+    },
+    {
+      "description": "Validation du résultat final",
+      "points": 4,
+      "subcriteria": [
+        {
+          "text": "Triangle correctement affiché pour n=7"
+        },
+        {
+          "text": "Triangle correctement affiché pour n=8"
+        },
+        {
+          "text": "Triangle correctement affiché pour n=12"
+        },
+        {
+          "text": "Résultat identique à l'exemple fourni"
+        }
+      ],
+      "title": "Tests et résultat"
+    }
+  ]
+}

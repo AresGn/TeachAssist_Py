@@ -2,6 +2,7 @@
   "id": "02-intervalle",
   "name": " Vérification d'appartenance à un intervalle",
   "description": "Programme qui vérifie si un nombre réel appartient à l'ensemble I = [0,1] U [2,3] en utilisant uniquement les opérateurs < et ==.",
+  "testInputs": [],
   "rules": {
     "requiredMethods": [
       {
@@ -63,6 +64,11 @@
         "variable": "x"
       }
     ],
-    "mathFunctions": []
-  }
+    "mathFunctions": [],
+    "exceptionHandling": {
+      "requiredTryCatch": false,
+      "specificExceptions": []
+    }
+  },
+  "grading_criteria": []
 }

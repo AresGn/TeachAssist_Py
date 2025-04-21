@@ -12,6 +12,7 @@ from teach_assit.gui.config_editor import ConfigEditorWidget
 from teach_assit.gui.dashboard_widget import DashboardWidget
 from teach_assit.gui.results_widget import ResultsWidget
 from teach_assit.gui.about_widget import AboutWidget
+from teach_assit.gui.feedback_widget import FeedbackWidget
 from teach_assit.utils.file_utils import SubmissionManager
 from teach_assit.core.analysis.config_loader import ConfigLoader
 from teach_assit.core.analysis.static_analyzer import StaticAnalyzer
@@ -91,23 +92,30 @@ class MainWindow(QMainWindow):
         self.nav_results.setCheckable(True)
         self.nav_results.clicked.connect(lambda: self.switch_page(3))
         
+        self.nav_feedback = QPushButton("  Notes & Feedback")
+        self.nav_feedback.setIcon(QIcon("icons/message-circle.svg"))
+        self.nav_feedback.setIconSize(QSize(24, 24))
+        self.nav_feedback.setCheckable(True)
+        self.nav_feedback.clicked.connect(lambda: self.switch_page(4))
+        
         self.nav_config = QPushButton("  Configuration")
         self.nav_config.setIcon(QIcon("icons/settings.svg"))
         self.nav_config.setIconSize(QSize(24, 24))
         self.nav_config.setCheckable(True)
-        self.nav_config.clicked.connect(lambda: self.switch_page(4))
+        self.nav_config.clicked.connect(lambda: self.switch_page(5))
         
         self.nav_about = QPushButton("  À propos")
         self.nav_about.setIcon(QIcon("icons/info.svg"))
         self.nav_about.setIconSize(QSize(20, 20))
         self.nav_about.setObjectName("about-button")
         self.nav_about.setCheckable(True)
-        self.nav_about.clicked.connect(lambda: self.switch_page(5))
+        self.nav_about.clicked.connect(lambda: self.switch_page(6))
         
         sidebar_layout.addWidget(self.nav_dashboard)
         sidebar_layout.addWidget(self.nav_extract)
         sidebar_layout.addWidget(self.nav_analyze)
         sidebar_layout.addWidget(self.nav_results)
+        sidebar_layout.addWidget(self.nav_feedback)
         sidebar_layout.addWidget(self.nav_config)
         sidebar_layout.addWidget(self.nav_about)
         sidebar_layout.addStretch()
@@ -148,6 +156,13 @@ class MainWindow(QMainWindow):
         # Onglet de résultats
         self.results_tab = ResultsWidget()
         self.tab_widget.addTab(self.results_tab, "Résultats")
+        
+        # Onglet Notes & Feedback
+        self.feedback_tab = FeedbackWidget()
+        self.tab_widget.addTab(self.feedback_tab, "Notes & Feedback")
+        
+        # Connecter le widget de feedback au widget de résultats
+        self.feedback_tab.set_results_widget(self.results_tab)
         
         # Onglet de configuration
         self.config_editor = ConfigEditorWidget()
@@ -455,37 +470,52 @@ class MainWindow(QMainWindow):
         layout.addWidget(main_content, 1)  # Le 1 indique qu'il prendra tout l'espace disponible
     
     def switch_page(self, index):
-        """Changer d'onglet et mettre à jour l'interface."""
+        """Change la page affichée en fonction du bouton cliqué."""
         self.tab_widget.setCurrentIndex(index)
         
         # Si on passe à l'onglet d'analyse, mettre à jour le tableau des soumissions
         if index == 2:
             self.update_submission_table()
         
-        # Désélectionner tous les boutons et sélectionner le bon
-        for button in [self.nav_dashboard, self.nav_extract, self.nav_analyze, 
-                      self.nav_results, self.nav_config, self.nav_about]:
-            button.setChecked(False)
+        # Décocher tous les boutons
+        self.nav_dashboard.setChecked(False)
+        self.nav_extract.setChecked(False)
+        self.nav_analyze.setChecked(False)
+        self.nav_results.setChecked(False)
+        self.nav_feedback.setChecked(False)
+        self.nav_config.setChecked(False)
+        self.nav_about.setChecked(False)
         
+        # Cocher le bouton correspondant
         if index == 0:
             self.nav_dashboard.setChecked(True)
             self.animate_button(self.nav_dashboard)
+            self.statusBar.showMessage("Tableau de bord")
         elif index == 1:
             self.nav_extract.setChecked(True)
             self.animate_button(self.nav_extract)
+            self.statusBar.showMessage("Extraction des soumissions")
         elif index == 2:
             self.nav_analyze.setChecked(True)
             self.animate_button(self.nav_analyze)
+            self.statusBar.showMessage("Analyse des soumissions")
         elif index == 3:
             self.nav_results.setChecked(True)
             self.animate_button(self.nav_results)
+            self.statusBar.showMessage("Résultats de l'analyse")
         elif index == 4:
+            self.nav_feedback.setChecked(True)
+            self.animate_button(self.nav_feedback)
+            self.statusBar.showMessage("Notes & Feedback")
+        elif index == 5:
             self.nav_config.setChecked(True)
             self.animate_button(self.nav_config)
-        elif index == 5:
+            self.statusBar.showMessage("Configuration")
+        elif index == 6:
             self.nav_about.setChecked(True)
             self.animate_button(self.nav_about)
-            
+            self.statusBar.showMessage("À propos")
+    
     def animate_button(self, button):
         """Ajouter une animation au survol des boutons."""
         animation = QPropertyAnimation(button, b"pos")
@@ -614,7 +644,7 @@ class MainWindow(QMainWindow):
     
     def show_about_tab(self):
         """Afficher l'onglet À propos."""
-        self.switch_page(5)  # L'index de l'onglet À propos
+        self.switch_page(6)  # L'index de l'onglet À propos
     
     def closeEvent(self, event):
         """Nettoyer les ressources avant de fermer l'application."""

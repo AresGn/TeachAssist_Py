@@ -2,6 +2,7 @@
   "id": "11-sequence-numerique",
   "name": "Séquence Numérique",
   "description": "Écrire un programme qui affiche des séquences numériques selon différents modèles.",
+  "testInputs": [],
   "rules": {
     "requiredMethods": [
       {
@@ -54,10 +55,12 @@
         "required": true
       }
     ],
+    "requiredDomainChecks": [],
     "mathFunctions": [],
     "exceptionHandling": {
       "requiredTryCatch": false,
       "specificExceptions": []
     }
-  }
-} 
+  },
+  "grading_criteria": []
+}

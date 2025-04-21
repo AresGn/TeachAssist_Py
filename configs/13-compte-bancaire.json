@@ -1,0 +1,195 @@
+{
+  "id": "13-compte-bancaire",
+  "name": "Gestion de Compte Bancaire",
+  "description": "Écrire un programme en JAVA qui simule la gestion d'un simple compte bancaire. Le compte est créé avec un solde initial. Il est possible de déposer et de retirer des fonds et de connaître le solde actuel. Implémentez une classe Account avec constructeurs, getBalance(), deposer(), retirer() et tenueCompt().",
+  "testInputs": [
+    {
+      "value": "30000, 1000, 10000, 0.02",
+      "description": "Test standard (solde initial, dépôt, retrait, taux)"
+    },
+    {
+      "value": "5000, 500, 1000, 0.05",
+      "description": "Petit compte, frais élevés"
+    },
+    {
+      "value": "100000, 20000, 5000, 0.01",
+      "description": "Grand compte, faibles frais"
+    }
+  ],
+  "rules": {
+    "requiredMethods": [
+      {
+        "name": "Account",
+        "params": [],
+        "returnType": "constructeur"
+      },
+      {
+        "name": "Account",
+        "params": [
+          "double"
+        ],
+        "returnType": "constructeur"
+      },
+      {
+        "name": "getBalance",
+        "params": [],
+        "returnType": "double"
+      },
+      {
+        "name": "deposer",
+        "params": [
+          "double"
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "retirer",
+        "params": [
+          "double"
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "tenueCompt",
+        "params": [
+          "double"
+        ],
+        "returnType": "void"
+      }
+    ],
+    "allowedOperators": [
+      "+",
+      "-",
+      "*",
+      "/",
+      "=",
+      "+=",
+      "-=",
+      "*="
+    ],
+    "requiredControlStructures": [],
+    "checkVariableScope": true,
+    "checkNamingConventions": [
+      "camelCase"
+    ],
+    "customPatterns": [
+      {
+        "description": "Constructeur par défaut initialisant le solde à 0",
+        "errorMessage": "Le constructeur par défaut doit initialiser le solde à 0.",
+        "pattern": "public\\s+Account\\s*\\(\\s*\\)\\s*\\{[\\s\\S]*?this\\.balance\\s*=\\s*0",
+        "required": true
+      },
+      {
+        "description": "Constructeur avec paramètre initialisant le solde",
+        "errorMessage": "Le constructeur avec paramètre doit initialiser le solde avec la valeur fournie.",
+        "pattern": "public\\s+Account\\s*\\(\\s*double\\s+[\\w]+\\s*\\)\\s*\\{[\\s\\S]*?this\\.balance\\s*=",
+        "required": true
+      },
+      {
+        "description": "Méthode getBalance retournant le solde",
+        "errorMessage": "La méthode getBalance doit retourner le solde actuel.",
+        "pattern": "public\\s+double\\s+getBalance\\s*\\(\\s*\\)\\s*\\{[\\s\\S]*?return\\s+.*balance",
+        "required": true
+      },
+      {
+        "description": "Méthode deposer ajoutant au solde",
+        "errorMessage": "La méthode deposer doit ajouter le montant spécifié au solde.",
+        "pattern": "public\\s+void\\s+deposer\\s*\\(\\s*double\\s+[\\w]+\\s*\\)\\s*\\{[\\s\\S]*?balance\\s*\\+=|balance\\s*=\\s*balance\\s*\\+",
+        "required": true
+      },
+      {
+        "description": "Méthode retirer diminuant le solde",
+        "errorMessage": "La méthode retirer doit soustraire le montant spécifié du solde.",
+        "pattern": "public\\s+void\\s+retirer\\s*\\(\\s*double\\s+[\\w]+\\s*\\)\\s*\\{[\\s\\S]*?balance\\s*-=|balance\\s*=\\s*balance\\s*-",
+        "required": true
+      },
+      {
+        "description": "Méthode tenueCompt appliquant des frais",
+        "errorMessage": "La méthode tenueCompt doit appliquer les frais selon la formule solde * (1 - taux).",
+        "pattern": "public\\s+void\\s+tenueCompt\\s*\\(\\s*double\\s+[\\w]+\\s*\\)\\s*\\{[\\s\\S]*?balance\\s*\\*=\\s*\\(\\s*1\\s*-\\s*|balance\\s*=\\s*balance\\s*\\*\\s*\\(\\s*1\\s*-\\s*",
+        "required": true
+      }
+    ],
+    "requiredDomainChecks": [],
+    "mathFunctions": [],
+    "exceptionHandling": {
+      "requiredTryCatch": false,
+      "specificExceptions": []
+    }
+  },
+  "grading_criteria": [
+    {
+      "description": "Création et initialisation du compte",
+      "points": 4,
+      "subcriteria": [
+        {
+          "text": "Constructeur par défaut initialisant le solde à 0"
+        },
+        {
+          "text": "Constructeur avec paramètre initialisant le solde correctement"
+        },
+        {
+          "text": "Bonne utilisation des attributs privés (encapsulation)"
+        },
+        {
+          "text": "Déclaration correcte de la variable de solde (double balance)"
+        }
+      ],
+      "title": "Implémentation des constructeurs"
+    },
+    {
+      "description": "Fonctionnalités essentielles du compte",
+      "points": 6,
+      "subcriteria": [
+        {
+          "text": "Méthode getBalance retournant correctement le solde"
+        },
+        {
+          "text": "Méthode deposer augmentant correctement le solde"
+        },
+        {
+          "text": "Méthode retirer diminuant correctement le solde"
+        },
+        {
+          "text": "Respect des signatures de méthodes demandées"
+        }
+      ],
+      "title": "Implémentation des méthodes de base"
+    },
+    {
+      "description": "Application des frais de tenue de compte",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Méthode tenueCompt calculant correctement les frais"
+        },
+        {
+          "text": "Application de la formule solde * (1 - taux)"
+        },
+        {
+          "text": "Manipulation correcte des valeurs décimales"
+        }
+      ],
+      "title": "Implémentation de la tenue de compte"
+    },
+    {
+      "description": "Organisation et qualité du code",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Organisation logique et claire du code"
+        },
+        {
+          "text": "Respect des conventions de nommage camelCase"
+        },
+        {
+          "text": "Documentation adéquate (commentaires pertinents)"
+        },
+        {
+          "text": "Validation éventuelle des entrées négatives"
+        }
+      ],
+      "title": "Structure et style de code"
+    }
+  ]
+}

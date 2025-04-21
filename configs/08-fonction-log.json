@@ -2,29 +2,43 @@
   "id": "08-fonction-log",
   "name": "Fonction Logarithme Népérien",
   "description": "Implémenter une méthode qui calcule log(x). Gérer le domaine de définition (x > 0).",
+  "testInputs": [],
   "rules": {
     "requiredMethods": [
-      { "name": "logarithmeNeperien", "params": ["double"], "returnType": "double" }
+      {
+        "name": "logarithmeNeperien",
+        "params": [
+          "double"
+        ],
+        "returnType": "double"
+      }
     ],
+    "allowedOperators": [],
+    "requiredControlStructures": [],
+    "checkVariableScope": false,
+    "checkNamingConventions": [],
+    "customPatterns": [],
     "requiredDomainChecks": [
       {
-        "pattern": "if\\s*\\(\\s*x\\s*<=\\s*0\\s*\\)",
         "description": "Une vérification explicite pour x <= 0 est requise avant d'appeler Math.log.",
-        "required": true,
-        "errorMessage": "Le domaine de définition du logarithme (x > 0) n'est pas correctement géré. Ajoutez une condition pour x <= 0."
+        "errorMessage": "Le domaine de définition du logarithme (x > 0) n'est pas correctement géré. Ajoutez une condition pour x <= 0.",
+        "pattern": "if\\s*\\(\\s*x\\s*<=\\s*0\\s*\\)",
+        "required": true
       }
     ],
     "mathFunctions": [
       {
-        "name": "Math.log",
         "domainCondition": {
           "description": "Math.log requiert un argument strictement positif."
-        }
+        },
+        "name": "Math.log"
       }
     ],
     "exceptionHandling": {
-      "requiredTryCatch": false,
-      "specificExceptions": ["IllegalArgumentException"]
+      "required": false,
+      "specificExceptions": [
+        "IllegalArgumentException"
+      ]
     }
   }
-} 
+}

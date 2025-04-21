@@ -14,6 +14,7 @@ class ExerciseConfig:
         self.difficulty = config_dict.get('difficulty', 1)
         self.max_points = config_dict.get('maxPoints', 10)
         self.test_inputs = config_dict.get('testInputs', [])
+        self.grading_criteria = config_dict.get('grading_criteria', [])
         
         # Règles de vérification
         self.rules = config_dict.get('rules', {})
@@ -30,7 +31,8 @@ class ExerciseConfig:
             'name': self.name,
             'description': self.description,
             'testInputs': self.test_inputs,
-            'rules': self.rules
+            'rules': self.rules,
+            'grading_criteria': self.grading_criteria
         }
     
     def get_required_methods(self):
