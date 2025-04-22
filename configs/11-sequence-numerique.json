@@ -62,5 +62,95 @@
       "specificExceptions": []
     }
   },
-  "grading_criteria": []
+  "grading_criteria": [
+    {
+      "description": "Implémentation correcte des méthodes demandées",
+      "points": 2,
+      "subcriteria": [
+        {
+          "text": "Méthode afficherLigne correctement implémentée"
+        },
+        {
+          "text": "Méthode afficherTriangle correctement implémentée"
+        },
+        {
+          "text": "Respect des signatures demandées"
+        }
+      ],
+      "title": "Implémentation des méthodes"
+    },
+    {
+      "description": "Affichage de la séquence en ligne",
+      "points": 2,
+      "subcriteria": [
+        {
+          "text": "Utilisation correcte de la boucle for pour afficher les chiffres de 1 à 9"
+        },
+        {
+          "text": "Utilisation appropriée de System.out.print sans saut de ligne"
+        },
+        {
+          "text": "Affichage correct de la séquence (1 2 3 4 5 6 7 8 9)"
+        }
+      ],
+      "title": "Affichage en ligne"
+    },
+    {
+      "description": "Création du triangle numérique",
+      "points": 2,
+      "subcriteria": [
+        {
+          "text": "Utilisation correcte des boucles imbriquées"
+        },
+        {
+          "text": "Incrémentation correcte pour chaque ligne du triangle"
+        },
+        {
+          "text": "Utilisation appropriée des sauts de ligne entre chaque ligne du triangle"
+        },
+        {
+          "text": "Format correct du triangle (respect du modèle demandé)"
+        }
+      ],
+      "title": "Structure du triangle"
+    },
+    {
+      "description": "Tests et exécution du code",
+      "points": 2,
+      "subcriteria": [
+        {
+          "text": "Le programme s'exécute sans erreurs"
+        },
+        {
+          "text": "La séquence en ligne s'affiche correctement"
+        },
+        {
+          "text": "Le triangle numérique s'affiche correctement"
+        },
+        {
+          "text": "Tous les tests automatiques sont passés avec succès"
+        }
+      ],
+      "title": "Tests et résultat"
+    },
+    {
+      "description": "Qualité et style du code",
+      "points": 2,
+      "subcriteria": [
+        {
+          "text": "Respect des conventions de nommage camelCase"
+        },
+        {
+          "text": "Organisation logique et claire du code"
+        },
+        {
+          "text": "Utilisation des opérateurs autorisés uniquement"
+        },
+        {
+          "text": "Respect des contraintes de portée des variables"
+        }
+      ],
+      "title": "Style et qualité"
+    }
+  ]
 }

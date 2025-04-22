@@ -12,7 +12,7 @@ from teach_assit.gui.config_editor import ConfigEditorWidget
 from teach_assit.gui.dashboard_widget import DashboardWidget
 from teach_assit.gui.results_widget import ResultsWidget
 from teach_assit.gui.about_widget import AboutWidget
-from teach_assit.gui.feedback_widget import FeedbackWidget
+from teach_assit.gui.feedback import FeedbackWidget
 from teach_assit.utils.file_utils import SubmissionManager
 from teach_assit.core.analysis.config_loader import ConfigLoader
 from teach_assit.core.analysis.static_analyzer import StaticAnalyzer

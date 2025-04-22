@@ -87,7 +87,7 @@
   "grading_criteria": [
     {
       "description": "Gestion de la saisie utilisateur",
-      "points": 4,
+      "points": 2,
       "subcriteria": [
         {
           "text": "Utilisation correcte de Scanner pour lire l'entrée"
@@ -103,7 +103,7 @@
     },
     {
       "description": "Implémentation correcte de l'algorithme de dessin",
-      "points": 6,
+      "points": 3,
       "subcriteria": [
         {
           "text": "Calcul correct du nombre d'espaces par ligne"
@@ -122,7 +122,7 @@
     },
     {
       "description": "Organisation et qualité du code",
-      "points": 6,
+      "points": 3,
       "subcriteria": [
         {
           "text": "Organisation logique et claire (2 points)"
@@ -138,7 +138,7 @@
     },
     {
       "description": "Validation du résultat final",
-      "points": 4,
+      "points": 2,
       "subcriteria": [
         {
           "text": "Triangle correctement affiché pour n=7"
