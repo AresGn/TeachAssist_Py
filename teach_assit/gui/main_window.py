@@ -6,13 +6,13 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
 from PyQt5.QtCore import Qt, QTimer, QSize, QPropertyAnimation, QEasingCurve, QRect
 from PyQt5.QtGui import QIcon
 
-from teach_assit.gui.file_selector import FileSelector
 from teach_assit.gui.results_display import SubmissionTreeWidget
 from teach_assit.gui.config_editor import ConfigEditorWidget
 from teach_assit.gui.dashboard_widget import DashboardWidget
 from teach_assit.gui.results_widget import ResultsWidget
 from teach_assit.gui.about_widget import AboutWidget
 from teach_assit.gui.feedback import FeedbackWidget
+from teach_assit.gui.db_file_manager import DatabaseFileManager
 from teach_assit.utils.file_utils import SubmissionManager
 from teach_assit.core.analysis.config_loader import ConfigLoader
 from teach_assit.core.analysis.static_analyzer import StaticAnalyzer
@@ -74,11 +74,11 @@ class MainWindow(QMainWindow):
         self.nav_dashboard.setChecked(True)
         self.nav_dashboard.clicked.connect(lambda: self.switch_page(0))
         
-        self.nav_extract = QPushButton("  Extraction")
-        self.nav_extract.setIcon(QIcon("icons/download.svg"))
-        self.nav_extract.setIconSize(QSize(24, 24))
-        self.nav_extract.setCheckable(True)
-        self.nav_extract.clicked.connect(lambda: self.switch_page(1))
+        self.nav_files = QPushButton("  Fichiers")
+        self.nav_files.setIcon(QIcon("icons/file-text.svg"))
+        self.nav_files.setIconSize(QSize(24, 24))
+        self.nav_files.setCheckable(True)
+        self.nav_files.clicked.connect(lambda: self.switch_page(1))
         
         self.nav_analyze = QPushButton("  Analyse")
         self.nav_analyze.setIcon(QIcon("icons/activity.svg"))
@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
         self.nav_about.clicked.connect(lambda: self.switch_page(6))
         
         sidebar_layout.addWidget(self.nav_dashboard)
-        sidebar_layout.addWidget(self.nav_extract)
+        sidebar_layout.addWidget(self.nav_files)
         sidebar_layout.addWidget(self.nav_analyze)
         sidebar_layout.addWidget(self.nav_results)
         sidebar_layout.addWidget(self.nav_feedback)
@@ -143,10 +143,12 @@ class MainWindow(QMainWindow):
         self.dashboard_tab = DashboardWidget()
         self.tab_widget.addTab(self.dashboard_tab, "Tableau de bord")
         
-        # Onglet d'extraction
-        self.extract_tab = QWidget()
-        self.setup_extract_tab()
-        self.tab_widget.addTab(self.extract_tab, "Extraction")
+        # Onglet Fichiers (remplace l'onglet d'extraction)
+        self.files_tab = DatabaseFileManager(submission_manager=self.submission_manager)
+        self.tab_widget.addTab(self.files_tab, "Fichiers")
+        
+        # Connecter le signal de sélection de dossier aux fonctions existantes
+        self.files_tab.folder_selected.connect(self.on_folder_selected)
         
         # Onglet d'analyse
         self.analyze_tab = QWidget()
@@ -224,37 +226,11 @@ class MainWindow(QMainWindow):
         self.animations.append(animation)  # Garder une référence à l'animation
     
     def setup_extract_tab(self):
-        """Configurer l'onglet d'extraction."""
-        layout = QVBoxLayout(self.extract_tab)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
-        
-        # En-tête
-        title_label = QLabel("Extraction des Soumissions")
-        title_label.setStyleSheet("""
-            font-size: 28px;
-            font-weight: bold;
-            color: #2c3e50;
-            padding: 10px;
-        """)
-        layout.addWidget(title_label)
-        
-        # Sélecteur de fichiers
-        self.file_selector = FileSelector()
-        self.file_selector.folder_selected.connect(self.on_folder_selected)
-        layout.addWidget(self.file_selector)
-        
-        # Bouton d'extraction
-        self.extract_button = QPushButton("Extraire les fichiers ZIP")
-        self.extract_button.setIcon(QIcon("icons/download.svg"))
-        self.extract_button.setIconSize(QSize(24, 24))
-        self.extract_button.setEnabled(False)
-        self.extract_button.clicked.connect(self.extract_zip_files)
-        layout.addWidget(self.extract_button)
-        
-        # Liste des fichiers extraits
-        self.results_widget = SubmissionTreeWidget()
-        layout.addWidget(self.results_widget)
+        """
+        Cette fonction est conservée pour référence mais n'est plus utilisée.
+        L'extraction est maintenant intégrée dans l'onglet Fichiers.
+        """
+        pass
     
     def setup_analyze_tab(self):
         """Configurer l'onglet d'analyse."""
@@ -470,51 +446,44 @@ class MainWindow(QMainWindow):
         layout.addWidget(main_content, 1)  # Le 1 indique qu'il prendra tout l'espace disponible
     
     def switch_page(self, index):
-        """Change la page affichée en fonction du bouton cliqué."""
+        """Changer d'onglet et mettre à jour l'apparence du bouton sélectionné."""
         self.tab_widget.setCurrentIndex(index)
         
+        # Désélectionner tous les boutons
+        for button in [self.nav_dashboard, self.nav_files, self.nav_analyze, 
+                     self.nav_results, self.nav_feedback, self.nav_config, self.nav_about]:
+            button.setChecked(False)
+            button.setStyleSheet("")
+        
         # Si on passe à l'onglet d'analyse, mettre à jour le tableau des soumissions
-        if index == 2:
+        if index == 2:  # Onglet Analyse
             self.update_submission_table()
         
-        # Décocher tous les boutons
-        self.nav_dashboard.setChecked(False)
-        self.nav_extract.setChecked(False)
-        self.nav_analyze.setChecked(False)
-        self.nav_results.setChecked(False)
-        self.nav_feedback.setChecked(False)
-        self.nav_config.setChecked(False)
-        self.nav_about.setChecked(False)
-        
-        # Cocher le bouton correspondant
+        # Sélectionner le bouton actif
         if index == 0:
             self.nav_dashboard.setChecked(True)
             self.animate_button(self.nav_dashboard)
-            self.statusBar.showMessage("Tableau de bord")
         elif index == 1:
-            self.nav_extract.setChecked(True)
-            self.animate_button(self.nav_extract)
-            self.statusBar.showMessage("Extraction des soumissions")
+            self.nav_files.setChecked(True)
+            self.animate_button(self.nav_files)
         elif index == 2:
             self.nav_analyze.setChecked(True)
             self.animate_button(self.nav_analyze)
-            self.statusBar.showMessage("Analyse des soumissions")
         elif index == 3:
             self.nav_results.setChecked(True)
             self.animate_button(self.nav_results)
-            self.statusBar.showMessage("Résultats de l'analyse")
         elif index == 4:
             self.nav_feedback.setChecked(True)
             self.animate_button(self.nav_feedback)
-            self.statusBar.showMessage("Notes & Feedback")
         elif index == 5:
             self.nav_config.setChecked(True)
             self.animate_button(self.nav_config)
-            self.statusBar.showMessage("Configuration")
         elif index == 6:
             self.nav_about.setChecked(True)
             self.animate_button(self.nav_about)
-            self.statusBar.showMessage("À propos")
+        
+        # Mettre à jour le titre
+        self.update_title_for_page(index)
     
     def animate_button(self, button):
         """Ajouter une animation au survol des boutons."""
@@ -559,8 +528,11 @@ class MainWindow(QMainWindow):
         assessment_id = self.assessment_combo.currentData()
         
         if not assessment_id:
-            self.description_label.setText("Sélectionnez un dossier contenant les fichiers ZIP des soumissions.")
+            self.description_label.setText("Sélectionnez une évaluation pour voir les soumissions correspondantes.")
             self.analyze_button.setEnabled(False)
+            # Vider et masquer le tableau quand aucune évaluation n'est sélectionnée
+            self.submission_table.setRowCount(0)
+            self.submission_table.setHidden(True)
             return
         
         assessment = self.config_loader.get_assessment_config(assessment_id)
@@ -572,16 +544,14 @@ class MainWindow(QMainWindow):
             exercises_str = ", ".join(exercises)
             self.description_label.setText(f"Évaluation : {assessment.name}\nExercices : {exercises_str}")
             
-            # Activer le bouton d'analyse seulement si on a des soumissions extraites
-            has_submissions = len(self.submission_manager.get_student_folders()) > 0
-            self.analyze_button.setEnabled(has_submissions)
+            # Mettre à jour le tableau des soumissions avec le nouveau filtre
+            self.update_submission_table()
     
     def on_folder_selected(self, folder_path):
         """Appelé lorsqu'un dossier est sélectionné."""
         self.submission_manager.set_base_directory(folder_path)
         zip_files = self.submission_manager.list_zip_files()
         
-        self.extract_button.setEnabled(len(zip_files) > 0)
         self.statusBar.showMessage(f"Dossier sélectionné : {folder_path} - {len(zip_files)} fichier(s) ZIP trouvé(s)")
     
     def extract_zip_files(self):
@@ -671,19 +641,115 @@ class MainWindow(QMainWindow):
         # Récupérer les dossiers d'étudiants extraits
         student_folders = self.submission_manager.get_student_folders()
         
+        # Récupérer l'évaluation sélectionnée
+        assessment_id = self.assessment_combo.currentData()
+        
+        # Si aucune évaluation n'est sélectionnée, vider le tableau et le masquer
+        if not assessment_id:
+            self.submission_table.setRowCount(0)
+            self.submission_table.setHidden(True)
+            self.statusBar.showMessage("Veuillez sélectionner une évaluation pour voir les soumissions correspondantes")
+            self.analyze_button.setEnabled(False)
+            return
+        
+        # Si aucune soumission n'est disponible, vider le tableau et le masquer
         if not student_folders:
             self.submission_table.setRowCount(0)
             self.submission_table.setHidden(True)
+            self.statusBar.showMessage("Aucune soumission disponible")
+            self.analyze_button.setEnabled(False)
+            return
+        
+        # Récupérer la configuration de l'évaluation sélectionnée
+        assessment = self.config_loader.get_assessment_config(assessment_id)
+        if not assessment:
+            self.submission_table.setRowCount(0)
+            self.submission_table.setHidden(True)
+            self.statusBar.showMessage("Configuration de l'évaluation non trouvée")
+            self.analyze_button.setEnabled(False)
+            return
+            
+        # Créer un dictionnaire de correspondance entre mots-clés et exercices
+        exercise_keywords = {}
+        for ex in assessment.exercises:
+            ex_id = ex.get('exerciseId', '')
+            if ex_id:
+                # Extraire des mots-clés de l'ID de l'exercice
+                # Par exemple, '02-intervalle' donne 'intervalle'
+                if '-' in ex_id:
+                    keyword = ex_id.split('-', 1)[1].lower()
+                else:
+                    keyword = ex_id.lower()
+                exercise_keywords[keyword] = ex_id
+        
+        # Filtrer les fichiers Java par exercice
+        filtered_students = {}
+        
+        for student_name, info in student_folders.items():
+            java_files = info.get('java_files', [])
+            
+            # Filtrer les fichiers par exercice
+            filtered_files = []
+            
+            for java_file in java_files:
+                java_file_lower = java_file.lower()
+                
+                # Vérifier si le fichier correspond à l'un des exercices de l'évaluation
+                matches_exercise = False
+                
+                # Méthode 1: Correspondance directe avec l'ID d'exercice
+                for ex in assessment.exercises:
+                    ex_id = ex.get('exerciseId', '')
+                    if ex_id and ex_id.lower() in java_file_lower:
+                        matches_exercise = True
+                        break
+                
+                # Méthode 2: Correspondance avec les mots-clés extraits
+                if not matches_exercise:
+                    for keyword in exercise_keywords:
+                        if keyword in java_file_lower:
+                            matches_exercise = True
+                            break
+                        
+                        # Vérifier aussi le nom de base du fichier
+                        base_name = os.path.splitext(os.path.basename(java_file_lower))[0]
+                        if keyword in base_name:
+                            matches_exercise = True
+                            break
+                
+                # Méthode 3: Cas spéciaux
+                if not matches_exercise:
+                    if "intervalle" in java_file_lower and any("intervalle" in kw for kw in exercise_keywords):
+                        matches_exercise = True
+                    elif ("fonction" in java_file_lower or "log" in java_file_lower) and any(("fonction" in kw or "log" in kw) for kw in exercise_keywords):
+                        matches_exercise = True
+                
+                # Si le fichier correspond à un exercice de l'évaluation, l'ajouter à la liste filtrée
+                if matches_exercise:
+                    filtered_files.append(java_file)
+            
+            # Si l'étudiant a des fichiers correspondant aux exercices, l'ajouter à la liste
+            if filtered_files:
+                filtered_info = info.copy()
+                filtered_info['java_files'] = filtered_files
+                filtered_students[student_name] = filtered_info
+        
+        # Si aucune soumission ne correspond à l'évaluation sélectionnée
+        if not filtered_students:
+            self.submission_table.setRowCount(0)
+            self.submission_table.setHidden(True)
+            self.statusBar.showMessage(f"Aucune soumission correspondant à l'évaluation {assessment.name}")
+            self.analyze_button.setEnabled(False)
             return
         
         # Afficher le tableau
         self.submission_table.setHidden(False)
         
         # Configurer le tableau avec les données
-        self.submission_table.setRowCount(len(student_folders))
+        self.submission_table.setRowCount(len(filtered_students))
         
         # Remplir le tableau avec les données des étudiants et leurs fichiers
-        for row, (student_name, info) in enumerate(student_folders.items()):
+        for row, (student_name, info) in enumerate(filtered_students.items()):
             # Numéro de ligne
             num_item = QTableWidgetItem(str(row + 1))
             num_item.setTextAlignment(Qt.AlignCenter)
@@ -757,15 +823,17 @@ class MainWindow(QMainWindow):
         
         # Ajuster la hauteur des lignes en fonction du nombre de fichiers
         for row in range(self.submission_table.rowCount()):
-            java_files_count = len(student_folders[list(student_folders.keys())[row]].get('java_files', []))
+            student_name = list(filtered_students.keys())[row]
+            java_files_count = len(filtered_students[student_name].get('java_files', []))
             # Hauteur plus grande pour chaque fichier
             row_height = max(70, 50 + java_files_count * 45)
             self.submission_table.setRowHeight(row, row_height)
         
-        # Mise à jour du statut
-        has_submissions = len(student_folders) > 0
-        assessment_id = self.assessment_combo.currentData()
-        self.analyze_button.setEnabled(has_submissions and assessment_id is not None)
+        # Mettre à jour le statut
+        self.analyze_button.setEnabled(len(filtered_students) > 0)
+        
+        # Afficher un message d'information dans la barre de statut
+        self.statusBar.showMessage(f"{len(filtered_students)} soumission(s) correspondant à l'évaluation {assessment.name}")
     
     def analyze_submissions(self):
         """Analyser les soumissions d'étudiants avec l'analyseur statique."""
@@ -1041,4 +1109,19 @@ class MainWindow(QMainWindow):
                                "✅ Vert: Code valide\n"
                                "⚠️ Orange: Méthodes manquantes ou incorrectes\n"
                                "❌ Rouge: Erreurs de syntaxe\n\n"
-                               "Survolez les fichiers pour voir les détails.") 
+                               "Survolez les fichiers pour voir les détails.")
+    
+    def update_title_for_page(self, index):
+        """Met à jour le titre de la fenêtre en fonction de la page active."""
+        titles = [
+            "TeachAssit - Tableau de bord",
+            "TeachAssit - Gestion des fichiers",
+            "TeachAssit - Analyse des soumissions",
+            "TeachAssit - Résultats d'analyse",
+            "TeachAssit - Notes et Feedback",
+            "TeachAssit - Configuration",
+            "TeachAssit - À propos"
+        ]
+        
+        if 0 <= index < len(titles):
+            self.setWindowTitle(titles[index]) 

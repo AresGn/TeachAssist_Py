@@ -3,3 +3,4 @@ javalang
 requests 
 pytest 
 PyInstaller 
+# SQLite est inclus dans la bibliothèque standard Python
