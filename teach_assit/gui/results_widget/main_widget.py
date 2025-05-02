@@ -4,6 +4,7 @@ Widget principal pour l'affichage et l'analyse des résultats des étudiants.
 
 import os
 import logging
+import json
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                            QTableWidget, QTableWidgetItem, QComboBox, 
                            QPushButton, QLineEdit, QFrame, QHeaderView,
@@ -12,6 +13,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QColor, QFont
 
 from teach_assit.core.analysis.config_loader import ConfigLoader
+from teach_assit.core.analysis.models import ExerciseConfig
 from teach_assit.gui.results_widget.utils import SYMBOL_OK, SYMBOL_FAIL, SYMBOL_WARNING
 from teach_assit.gui.results_widget.dialogs import DetailsDialog, OutputDialog
 from teach_assit.gui.results_widget.report import format_detailed_report
@@ -579,9 +581,6 @@ class ResultsWidget(QWidget):
     
     def execute_all_codes(self):
         """Exécuter tous les codes des étudiants avec les entrées de test configurées."""
-        # Définir des entrées de test par défaut au cas où la configuration n'en contiendrait pas
-        default_triangle_inputs = ["3", "5", "10"]
-        
         # Désactiver le bouton d'exécution pendant le traitement
         self.execute_button.setEnabled(False)
         self.execute_button.setText("Exécution en cours...")
@@ -605,80 +604,120 @@ class ResultsWidget(QWidget):
             if student_item:
                 students.add(student_item.text())
         
-        # Récupérer les exercices présents dans le tableau des résultats
-        current_exercises = set()
-        for row in range(self.results_table.rowCount()):
-            # Au lieu de chercher un QTableWidgetItem, récupérer le widget personnalisé
-            exercise_widget = self.results_table.cellWidget(row, 1)
-            if exercise_widget and isinstance(exercise_widget, ExerciseWidget):
-                # Récupérer le nom de l'exercice depuis le widget
-                current_exercises.add(exercise_widget.get_exercise_name())
+        # Liste pour stocker les IDs d'exercices
+        exercise_ids = set()
         
-        # Si aucun exercice n'a été trouvé, essayer une méthode alternative
-        if not current_exercises:
-            # Essayer de récupérer les exercices depuis les labels dans les widgets
+        # Récupérer l'assessment courant depuis le tableau
+        current_assessment = None
+        for row in range(self.results_table.rowCount()):
+            for col in range(self.results_table.columnCount()):
+                item = self.results_table.item(row, col)
+                if item and "TD" in item.text():
+                    # Chercher un pattern "TD1", "TD2", etc.
+                    import re
+                    match = re.search(r'TD\d+', item.text())
+                    if match:
+                        current_assessment = match.group(0)
+                        break
+        
+        # Si nous n'avons pas déterminé l'assessment, utiliser la méthode d'origine
+        if not current_assessment:
+            # MÉTHODE 1: Récupérer les exercices depuis les widgets du tableau
             for row in range(self.results_table.rowCount()):
                 exercise_widget = self.results_table.cellWidget(row, 1)
-                if exercise_widget:
-                    # Tenter de récupérer le nom à partir des widgets enfants
-                    for child in exercise_widget.findChildren(QLabel):
-                        if child.objectName() == "exercise_label":
-                            current_exercises.add(child.text())
+                if exercise_widget and isinstance(exercise_widget, ExerciseWidget):
+                    exercise_name = exercise_widget.get_exercise_name()
+                    
+                    # Chercher l'ID correspondant au nom de l'exercice
+                    for ex_id, config in exercise_configs.items():
+                        if config.name == exercise_name:
+                            exercise_ids.add(ex_id)
                             break
-        
-        logging.info(f"Exercices actuellement analysés: {current_exercises}")
-        
-        # Mapper les noms d'exercices aux IDs pour pouvoir filtrer les configurations
-        exercise_name_to_id = {}
-        for ex_id, config in exercise_configs.items():
-            exercise_name_to_id[config.name] = ex_id
-        
-        # Afficher les noms d'exercices trouvés et leurs correspondances
-        logging.info(f"Noms d'exercices configurés: {list(exercise_name_to_id.keys())}")
-        
-        # Filtrer les exercices à traiter en fonction des exercices actuellement analysés
-        exercises_to_process = {}
-        for exercise_name in current_exercises:
-            # Chercher une correspondance exacte d'abord
-            ex_id = exercise_name_to_id.get(exercise_name)
+        else:
+            # Si nous avons un assessment, récupérer sa configuration
+            print(f"Assessment identifié : {current_assessment}")
+            assessment_config = config_loader.get_assessment_config(current_assessment)
             
-            # Si pas de correspondance exacte, chercher des correspondances partielles
-            if not ex_id:
-                for name, id in exercise_name_to_id.items():
-                    # Comparer en minuscules pour être plus flexible
-                    if (name.lower() in exercise_name.lower() or 
-                        exercise_name.lower() in name.lower()):
-                        ex_id = id
-                        logging.info(f"Correspondance partielle trouvée: '{exercise_name}' -> '{name}' (ID: {id})")
-                        break
-            
-            if ex_id and ex_id in exercise_configs:
-                exercises_to_process[ex_id] = exercise_configs[ex_id]
-                logging.info(f"Exercice à traiter: '{exercise_name}' -> ID: {ex_id}")
-            else:
-                logging.warning(f"Aucune configuration trouvée pour l'exercice '{exercise_name}'")
+            if assessment_config:
+                # Utiliser tous les exercices de cette évaluation
+                for ex in assessment_config.exercises:
+                    ex_id = ex.get('exerciseId', '')
+                    if ex_id:
+                        print(f"Ajout de l'exercice {ex_id} depuis la configuration de {current_assessment}")
+                        exercise_ids.add(ex_id)
         
+        # Si nous n'avons pas encore d'exercices, essayer les méthodes alternatives
+        if not exercise_ids:
+            # MÉTHODE 2: Analyser les exercices affichés dans le tableau
+            current_exercises = set()
+            for row in range(self.results_table.rowCount()):
+                # Récupérer le widget personnalisé
+                exercise_widget = self.results_table.cellWidget(row, 1)
+                if exercise_widget and isinstance(exercise_widget, ExerciseWidget):
+                    current_exercises.add(exercise_widget.get_exercise_name())
+                
+            # Pour chaque nom d'exercice, chercher l'ID correspondant
+            for exercise_name in current_exercises:
+                for ex_id, config in exercise_configs.items():
+                    if config.name == exercise_name:
+                        exercise_ids.add(ex_id)
+        
+        # Pour TD3 spécifiquement, on vérifie manuellement les exercices spécifiques
+        if current_assessment == "TD3" and not exercise_ids:
+            td3_exercises = ['09-fonction-racine-carree', '10-comptage-mots']
+            for ex_id in td3_exercises:
+                print(f"Vérification manuelle de l'exercice TD3: {ex_id}")
+                # Vérifier si l'exercice existe dans notre configuration
+                if ex_id in exercise_configs:
+                    exercise_ids.add(ex_id)
+                    print(f"Exercice {ex_id} ajouté depuis la liste manuelle")
+        
+        # Log pour le débogage
+        print(f"Exercices identifiés à exécuter: {exercise_ids}")
+        
+        # Charger les configurations directement depuis les fichiers JSON si nécessaires
+        missing_configs = [ex_id for ex_id in exercise_ids if ex_id not in exercise_configs]
+        if missing_configs:
+            print(f"Certains exercices n'ont pas été trouvés dans la base: {missing_configs}")
+            for ex_id in missing_configs:
+                config_path = f"configs/{ex_id}.json"
+                if os.path.exists(config_path):
+                    print(f"Chargement manuel de la configuration depuis {config_path}")
+                    try:
+                        with open(config_path, 'r', encoding='utf-8') as f:
+                            config_dict = json.load(f)
+                            exercise_configs[ex_id] = ExerciseConfig(config_dict)
+                            print(f"Configuration chargée avec succès: {ex_id}")
+                    except Exception as e:
+                        print(f"Erreur lors du chargement de {config_path}: {str(e)}")
+        
+        # Filtrer les configurations pour ne garder que les exercices identifiés
+        exercises_to_process = {ex_id: exercise_configs[ex_id] for ex_id in exercise_ids if ex_id in exercise_configs}
+        
+        # Vérification de sécurité avant de poursuivre
         if not exercises_to_process:
             QMessageBox.warning(self, "Aucun exercice", "Aucun exercice correspondant n'a été trouvé dans les configurations.")
             self.execute_button.setEnabled(True)
             self.execute_button.setText("Exécuter les codes")
             return
         
-        logging.info(f"Exercices à traiter: {list(exercises_to_process.keys())}")
+        # Log des exercices qui seront traités
+        print(f"Exercices à traiter: {list(exercises_to_process.keys())}")
         
         try:
-            # Pour chaque étudiant, exécuter uniquement les exercices actuellement analysés
+            # Pour chaque étudiant, exécuter uniquement les exercices identifiés
             for student_name in students:
-                logging.info(f"Traitement des exercices pour l'étudiant: {student_name}")
+                print(f"Traitement des exercices pour l'étudiant: {student_name}")
                 
-                # Parcourir uniquement les exercices actuellement analysés
+                # Parcourir uniquement les exercices identifiés
                 for ex_id, config in exercises_to_process.items():
                     # Déterminer les fichiers possibles pour cet exercice
                     # On adapte les noms de fichiers en fonction de l'ID de l'exercice
                     base_name = ex_id.split('-', 1)[1] if '-' in ex_id else ex_id
                     
                     potential_files = [
-                        f"{base_name}.java",
+                        f"{ex_id}.java",  # Format ID complet
+                        f"{base_name}.java",  # Format nom de base
                         f"{base_name}1.java",
                         f"{base_name}2.java",
                         f"{base_name}3.java",
@@ -688,23 +727,77 @@ class ResultsWidget(QWidget):
                         f"{base_name}-erreur.java"
                     ]
                     
+                    # Format spécifique pour certains exercices
+                    if "fonction-racine" in ex_id:
+                        potential_files.extend([
+                            "fonction-racine-carree.java",
+                            "racineCarre.java",
+                            "RacineCarree.java",
+                            "racine-carree.java",
+                            "Racine.java"
+                        ])
+                    elif "comptage-mots" in ex_id:
+                        potential_files.extend([
+                            "ComptageMots.java",
+                            "comptage-mots.java",
+                            "CompteMots.java",
+                            "Comptage.java",
+                            "Mots.java"
+                        ])
+                    
                     # Récupérer les entrées de test de la configuration
                     test_inputs = []
-                    if config.get_test_inputs():
-                        test_inputs = [input_config["value"] for input_config in config.get_test_inputs()]
-                    else:
-                        # Utiliser des entrées par défaut si aucune entrée n'est configurée
-                        if "triangle" in base_name.lower():
-                            test_inputs = default_triangle_inputs
+                    
+                    # Méthode 1: Utiliser la méthode get_test_inputs si disponible
+                    if hasattr(config, 'get_test_inputs') and callable(getattr(config, 'get_test_inputs')):
+                        raw_inputs = config.get_test_inputs()
+                        # Si les résultats sont des dictionnaires, extraire la valeur
+                        if raw_inputs and isinstance(raw_inputs[0], dict):
+                            test_inputs = [item.get("value", "") for item in raw_inputs]
                         else:
-                            # Par défaut, utiliser une entrée vide pour les autres exercices
+                            test_inputs = raw_inputs
+                        
+                        print(f"Test inputs trouvés pour {ex_id} via get_test_inputs: {test_inputs}")
+                    
+                    # Méthode 2: Accéder directement à l'attribut test_inputs
+                    if not test_inputs and hasattr(config, 'test_inputs'):
+                        raw_inputs = config.test_inputs
+                        # Si les résultats sont des dictionnaires, extraire la valeur
+                        if raw_inputs and isinstance(raw_inputs[0], dict):
+                            test_inputs = [item.get("value", "") for item in raw_inputs]
+                        else:
+                            test_inputs = raw_inputs
+                        
+                        print(f"Test inputs trouvés pour {ex_id} via attribut test_inputs: {test_inputs}")
+                    
+                    # Si aucune entrée n'est configurée, utiliser des entrées par défaut
+                    if not test_inputs:
+                        # Entrées par défaut selon le type d'exercice
+                        if "racine" in base_name.lower() or "fonction-racine" in ex_id:
+                            test_inputs = ["4", "9", "16", "-4", "0"]
+                            print(f"Utilisation d'entrées par défaut pour racine carrée: {test_inputs}")
+                        elif "triangle" in base_name.lower():
+                            test_inputs = ["3", "5", "10"]
+                            print(f"Utilisation d'entrées par défaut pour triangle: {test_inputs}")
+                        elif "comptage" in base_name.lower() or "mots" in base_name.lower():
+                            test_inputs = ["Ceci est un test", "Un deux trois quatre", ""]
+                            print(f"Utilisation d'entrées par défaut pour comptage mots: {test_inputs}")
+                        else:
+                            # Par défaut, utiliser une entrée vide
                             test_inputs = [""]
+                            print(f"Aucune entrée spécifique pour {ex_id}, utilisation de l'entrée vide")
+                    
+                    # S'assurer que nous avons au moins une entrée
+                    if not test_inputs:
+                        test_inputs = [""]
                     
                     # Chercher le fichier correspondant
+                    file_found = False
                     for file_name in potential_files:
                         file_path = self.code_executor.find_file_path(student_name, file_name)
                         if file_path:
-                            logging.info(f"Fichier {base_name} trouvé pour {student_name}: {file_path}")
+                            print(f"Fichier pour {ex_id} trouvé: {file_path}")
+                            file_found = True
                             
                             # Exécuter avec les entrées de test configurées
                             test_results = self.code_executor.execute_code(file_path, test_inputs)
@@ -714,12 +807,15 @@ class ResultsWidget(QWidget):
                                 input_val = test_inputs[i] if i < len(test_inputs) else ""
                                 
                                 input_description = ""
-                                if config.get_test_inputs() and i < len(config.get_test_inputs()):
-                                    input_description = config.get_test_inputs()[i].get("description", "")
+                                if hasattr(config, 'get_test_inputs') and config.get_test_inputs() and i < len(config.get_test_inputs()):
+                                    test_config = config.get_test_inputs()[i]
+                                    if isinstance(test_config, dict):
+                                        input_description = test_config.get("description", "")
                                 
                                 all_results.append({
                                     "student": student_name,
                                     "exercise": config.name,
+                                    "exercise_id": ex_id,
                                     "file_path": file_path,
                                     "input": input_val,
                                     "input_description": input_description,
@@ -728,10 +824,26 @@ class ResultsWidget(QWidget):
                                     "stdout": result.get("stdout", ""),
                                     "stderr": result.get("stderr", "")
                                 })
+                            
+                            # Si on a trouvé un fichier, on passe à l'exercice suivant
                             break
+                    
+                    if not file_found:
+                        print(f"Aucun fichier trouvé pour l'exercice {ex_id} et l'étudiant {student_name}")
             
-            # Afficher les résultats
-            self._display_execution_results(all_results)
+            # Vérifier si nous avons des résultats à afficher
+            if not all_results:
+                QMessageBox.warning(
+                    self, 
+                    "Aucun résultat d'exécution", 
+                    f"Aucun fichier n'a pu être exécuté avec les tests spécifiés. Assurez-vous que:\n\n"
+                    f"1. Les fichiers correspondent aux exercices: {', '.join(exercises_to_process.keys())}\n"
+                    f"2. Les configurations d'exercices contiennent des données d'entrée de test valides.\n"
+                    f"3. Les fichiers Java sont correctement nommés et placés dans les dossiers des étudiants."
+                )
+            else:
+                # Afficher les résultats
+                self._display_execution_results(all_results)
         
         except Exception as e:
             import traceback

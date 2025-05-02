@@ -82,7 +82,9 @@
     "exceptionHandling": {
       "requiredTryCatch": false,
       "specificExceptions": []
-    }
+    },
+    "requiredDomainChecks": [],
+    "mathFunctions": []
   },
   "grading_criteria": [
     {

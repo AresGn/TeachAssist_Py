@@ -50,7 +50,11 @@ class CodeExecutor:
         # Normaliser le nom du fichier (sans considérer la casse)
         normalized_filename = file_name.lower()
         
-        # Essayer différents chemins pour trouver le fichier
+        # Déterminer les informations de l'exercice et du TD à partir du nom de fichier
+        # Cette méthode plus générique utilise des patterns plutôt que des valeurs codées en dur
+        td_info = self._extract_assessment_info(normalized_filename)
+        
+        # Construire les chemins de recherche dynamiquement en fonction du TD identifié
         possible_paths = [
             # Chemin direct (si c'est déjà un chemin absolu)
             file_name,
@@ -64,11 +68,14 @@ class CodeExecutor:
             os.path.join(working_dir, student_name, file_name),
             # Variantes avec lettres minuscules
             os.path.join(working_dir, "extracted_files", student_name.lower(), file_name),
-            os.path.join(working_dir, "submitted_files", student_name.lower(), file_name),
-            # Rechercher dans d'autres dossiers communs
-            os.path.join(working_dir, "tests", "java_samples", student_name, file_name),
-            os.path.join(working_dir, "tests", "java_samples", "TD4", student_name, file_name)
+            os.path.join(working_dir, "submitted_files", student_name.lower(), file_name)
         ]
+        
+        # Ajouter les chemins pour tous les TDs connus
+        for td_number in range(1, 10):  # Supporter TD1 à TD9
+            td_name = f"TD{td_number}"
+            possible_paths.append(os.path.join(working_dir, "tests", "java_samples", td_name, student_name, file_name))
+            possible_paths.append(os.path.join(working_dir, "tests", "java_samples", td_name, student_name.lower(), file_name))
         
         # Vérifier chaque chemin
         for path in possible_paths:
@@ -78,18 +85,108 @@ class CodeExecutor:
             else:
                 logging.debug(f"Chemin non trouvé: {path}")
         
-        # Si le fichier n'est toujours pas trouvé, essayer de chercher par nom similaire
-        logging.info(f"Fichier non trouvé, recherche de noms similaires...")
+        # Si le fichier n'a pas été trouvé avec les chemins directs, essayer la recherche par similarité
+        return self._find_file_by_similarity(student_name, normalized_filename, td_info, working_dir)
+    
+    def _extract_assessment_info(self, normalized_filename):
+        """Extrait les informations d'évaluation (TD) à partir du nom de fichier.
         
+        Args:
+            normalized_filename: Nom de fichier normalisé (en minuscules)
+            
+        Returns:
+            dict: Informations sur le TD et l'exercice
+        """
+        # Initialiser avec des valeurs par défaut
+        td_info = {
+            "td_name": None,
+            "exercise_id": None,
+            "keywords": []
+        }
+        
+        # Essayer de détecter le TD à partir d'un pattern comme "01-exercice" ou "TD1"
+        import re
+        # Détecter les patterns comme "09-fonction" (TD3) ou similaires
+        id_match = re.search(r'^(\d{2})-([a-z-]+)', normalized_filename)
+        if id_match:
+            exercise_number = id_match.group(1)
+            keyword = id_match.group(2)
+            
+            # Associer les numéros d'exercice aux TDs (ceci pourrait être amélioré via une configuration)
+            if exercise_number in ["09", "10"]:
+                td_info["td_name"] = "TD3"
+            elif exercise_number in ["11", "12", "13", "14"]:
+                td_info["td_name"] = "TD4"
+            elif exercise_number in ["01", "02", "03", "04"]:
+                td_info["td_name"] = "TD1"
+            elif exercise_number in ["05", "06", "07", "08"]:
+                td_info["td_name"] = "TD2"
+                
+            td_info["exercise_id"] = f"{exercise_number}-{keyword}"
+            td_info["keywords"] = keyword.split("-")
+        
+        # Détecter directement le TD dans le nom du fichier
+        td_match = re.search(r'(td|TD)(\d+)', normalized_filename)
+        if td_match and not td_info["td_name"]:
+            td_info["td_name"] = f"TD{td_match.group(2)}"
+        
+        # Extraire des mots-clés supplémentaires du nom de fichier
+        parts = re.findall(r'[a-z]{3,}', normalized_filename)
+        if parts:
+            for part in parts:
+                if len(part) > 3 and part not in td_info["keywords"]:
+                    td_info["keywords"].append(part)
+        
+        # Associations connues de mots-clés à des exercices
+        keyword_to_td = {
+            "racine": "TD3",
+            "mot": "TD3",
+            "comptage": "TD3",
+            "triangle": "TD1",
+            "isocele": "TD1",
+            "sequence": "TD2",
+            "numerique": "TD2"
+        }
+        
+        # Si nous n'avons pas encore identifié le TD mais avons des mots-clés, essayer de le déduire
+        if not td_info["td_name"] and td_info["keywords"]:
+            for keyword in td_info["keywords"]:
+                if keyword in keyword_to_td:
+                    td_info["td_name"] = keyword_to_td[keyword]
+                    break
+        
+        return td_info
+    
+    def _find_file_by_similarity(self, student_name, normalized_filename, td_info, working_dir):
+        """Trouve un fichier par similarité avec le nom demandé.
+        
+        Args:
+            student_name: Nom de l'étudiant
+            normalized_filename: Nom de fichier normalisé
+            td_info: Informations sur le TD et l'exercice
+            working_dir: Répertoire de travail
+            
+        Returns:
+            str: Chemin du fichier trouvé, ou None si non trouvé
+        """
         # Chercher dans les répertoires d'étudiants tous les fichiers .java
         student_dirs = [
             os.path.join(working_dir, "extracted_files", student_name),
             os.path.join(working_dir, "submitted_files", student_name),
-            os.path.join(working_dir, student_name),
-            os.path.join(working_dir, "tests", "java_samples", student_name),
-            os.path.join(working_dir, "tests", "java_samples", "TD4", student_name)
+            os.path.join(working_dir, student_name)
         ]
         
+        # Ajouter les répertoires spécifiques au TD s'ils sont connus
+        if td_info["td_name"]:
+            student_dirs.append(os.path.join(working_dir, "tests", "java_samples", td_info["td_name"], student_name))
+            logging.info(f"Recherche spécifique pour {td_info['td_name']} avec mots-clés: {td_info['keywords']}")
+        
+        # Ajouter une recherche dans tous les TDs au cas où
+        for td_number in range(1, 10):  # Supporter TD1 à TD9
+            td_name = f"TD{td_number}"
+            student_dirs.append(os.path.join(working_dir, "tests", "java_samples", td_name, student_name))
+            
+        # Phase 1: Recherche dans les dossiers d'étudiants
         for student_dir in student_dirs:
             if not os.path.exists(student_dir):
                 continue
@@ -97,17 +194,58 @@ class CodeExecutor:
             for root, _, files in os.walk(student_dir):
                 for file in files:
                     if file.lower().endswith('.java'):
-                        # Vérifier si le nom de fichier contient des parties du nom recherché
-                        # ou si le nom recherché contient des parties du nom de fichier
-                        file_lower = file.lower()
-                        if (normalized_filename in file_lower or
-                            any(part in file_lower for part in normalized_filename.replace('-', ' ').split() if len(part) > 3)):
+                        # Vérifier la correspondance par mots-clés ou par nom
+                        if self._is_matching_file(file.lower(), normalized_filename, td_info["keywords"]):
                             full_path = os.path.join(root, file)
                             logging.info(f"Fichier similaire trouvé: {full_path}")
                             return full_path
         
-        logging.warning(f"Aucun fichier trouvé pour '{file_name}' de l'étudiant '{student_name}'")
+        # Phase 2: Si un TD spécifique est identifié, chercher dans tout son répertoire
+        if td_info["td_name"]:
+            td_base_dir = os.path.join(working_dir, "tests", "java_samples", td_info["td_name"])
+            if os.path.exists(td_base_dir):
+                logging.info(f"Recherche approfondie dans tous les dossiers {td_info['td_name']}")
+                
+                for root, _, files in os.walk(td_base_dir):
+                    for file in files:
+                        if file.lower().endswith('.java'):
+                            # Vérification plus stricte par mots-clés pour limiter les faux positifs
+                            if self._is_matching_file(file.lower(), normalized_filename, td_info["keywords"], strict=True):
+                                full_path = os.path.join(root, file)
+                                logging.info(f"Fichier {td_info['td_name']} trouvé lors de la recherche approfondie: {full_path}")
+                                return full_path
+        
+        logging.warning(f"Aucun fichier trouvé pour '{normalized_filename}' de l'étudiant '{student_name}'")
         return None
+    
+    def _is_matching_file(self, file_lower, normalized_filename, keywords, strict=False):
+        """Vérifie si un fichier correspond au nom recherché ou aux mots-clés.
+        
+        Args:
+            file_lower: Nom du fichier en minuscules
+            normalized_filename: Nom de fichier recherché normalisé
+            keywords: Liste de mots-clés à rechercher
+            strict: Si True, nécessite une correspondance plus stricte
+            
+        Returns:
+            bool: True si le fichier correspond, False sinon
+        """
+        # Correspondance directe entre noms
+        if normalized_filename in file_lower:
+            return True
+            
+        # Correspondance par mots-clés
+        if keywords:
+            # En mode strict, exiger au moins un mot-clé dans le nom du fichier
+            if strict:
+                return any(keyword in file_lower for keyword in keywords if len(keyword) > 3)
+            else:
+                # En mode normal, accepter des correspondances partielles
+                return any(
+                    part in file_lower 
+                    for part in normalized_filename.replace('-', ' ').split() 
+                    if len(part) > 3
+                )
     
     def execute_code(self, file_path, test_inputs):
         """Exécuter un code avec différentes entrées.
