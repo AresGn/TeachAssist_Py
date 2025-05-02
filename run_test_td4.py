@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from tests.test_static_analyzer import TestStaticAnalyzer
 from teach_assit.core.analysis.static_analyzer import StaticAnalyzer
 from teach_assit.core.analysis.models import ExerciseConfig
+from teach_assit.core.analysis.config_loader import ConfigLoader
 
 # Symboles pour le rapport
 SYMBOL_OK = "✅"
@@ -42,27 +43,40 @@ def analyze_td4_files():
     
     # Ouvrir un fichier pour écrire les résultats
     with open('analysis_results_td4.txt', 'w', encoding='utf-8') as out_file:
-        # Load TD4 configuration
-        td4_config_path = os.path.join('assessments', 'TD4.json')
-        with open(td4_config_path, 'r', encoding='utf-8') as f:
-            td4_config = json.load(f)
+        # Initialiser le chargeur de configuration
+        config_loader = ConfigLoader(os.getcwd())
         
-        # Get exercise IDs
-        exercise_ids = [ex['exerciseId'] for ex in td4_config['exercises']]
+        # S'assurer que toutes les configurations sont chargées depuis la base de données
+        config_loader.load_all_configs()
         
-        if not exercise_ids:
-            msg = "No exercises found in TD4.json configuration"
+        # Récupérer la configuration TD4 depuis la base de données
+        td4_config = config_loader.get_assessment_config('TD4')
+        
+        if not td4_config:
+            msg = "Configuration TD4 non trouvée dans la base de données"
             print(msg)
             out_file.write(msg + '\n')
             return
         
-        # Load exercise configs
+        # Obtenir les IDs des exercices à partir de la configuration TD4
+        exercise_ids = [ex['exerciseId'] for ex in td4_config.exercises]
+        
+        if not exercise_ids:
+            msg = "Aucun exercice trouvé dans la configuration TD4"
+            print(msg)
+            out_file.write(msg + '\n')
+            return
+        
+        # Charger les configurations d'exercices depuis la base de données
         exercise_configs = {}
         for ex_id in exercise_ids:
-            exercise_config_path = os.path.join('configs', f'{ex_id}.json')
-            with open(exercise_config_path, 'r', encoding='utf-8') as f:
-                config_dict = json.load(f)
-            exercise_configs[ex_id] = ExerciseConfig(config_dict)
+            config = config_loader.get_exercise_config(ex_id)
+            if config:
+                exercise_configs[ex_id] = config
+            else:
+                msg = f"Configuration de l'exercice {ex_id} non trouvée dans la base de données"
+                print(msg)
+                out_file.write(msg + '\n')
         
         # Initialize analyzer
         analyzer = StaticAnalyzer()

@@ -2,7 +2,36 @@
   "id": "02-intervalle",
   "name": " Vérification d'appartenance à un intervalle",
   "description": "Programme qui vérifie si un nombre réel appartient à l'ensemble I = [0,1] U [2,3] en utilisant uniquement les opérateurs < et ==.",
-  "testInputs": [],
+  "testInputs": [
+    {
+      "value": "0.5",
+      "description": "Dans l'intervalle [0,1]"
+    },
+    {
+      "value": "2.5",
+      "description": "Dans l'intervalle [2,3]"
+    },
+    {
+      "value": "1.5",
+      "description": "Entre les deux intervalles"
+    },
+    {
+      "value": "-1",
+      "description": "Inférieur à tous les intervalles"
+    },
+    {
+      "value": "4",
+      "description": "Supérieur à tous les intervalles"
+    },
+    {
+      "value": "0",
+      "description": "Borne inférieure du premier intervalle"
+    },
+    {
+      "value": "3",
+      "description": "Borne supérieure du deuxième intervalle"
+    }
+  ],
   "rules": {
     "requiredMethods": [
       {
@@ -70,5 +99,73 @@
       "specificExceptions": []
     }
   },
-  "grading_criteria": []
+  "grading_criteria": [
+    {
+      "description": "Lecture et validation de l'entrée utilisateur",
+      "points": 3,
+      "subcriteria": [
+        {
+          "text": "Utilisation correcte de Scanner pour lire l'entrée"
+        },
+        {
+          "text": "Gestion appropriée du type de données (double/float)"
+        },
+        {
+          "text": "Affichage d'un message explicatif pour l'utilisateur"
+        }
+      ],
+      "title": "Saisie et validation des données"
+    },
+    {
+      "description": "Implémentation correcte de la vérification d'appartenance",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Vérification correcte de l'appartenance à [0,1]"
+        },
+        {
+          "text": "Vérification correcte de l'appartenance à [2,3]"
+        },
+        {
+          "text": "Utilisation correcte des opérateurs logiques"
+        },
+        {
+          "text": "Respect des contraintes sur les opérateurs utilisés (< et ==)"
+        }
+      ],
+      "title": "Vérification d'intervalle"
+    },
+    {
+      "description": "Affichage du résultat",
+      "points": 4,
+      "subcriteria": [
+        {
+          "text": "Message clair indiquant l'appartenance à l'intervalle"
+        },
+        {
+          "text": "Message clair indiquant la non-appartenance à l'intervalle"
+        },
+        {
+          "text": "Format d'affichage approprié"
+        }
+      ],
+      "title": "Affichage du résultat"
+    },
+    {
+      "description": "Qualité et organisation du code",
+      "points": 3,
+      "subcriteria": [
+        {
+          "text": "Organisation logique et claire du code"
+        },
+        {
+          "text": "Respect des conventions de nommage camelCase"
+        },
+        {
+          "text": "Lisibilité et maintenabilité"
+        }
+      ],
+      "title": "Structure et style de code"
+    }
+  ]
 }

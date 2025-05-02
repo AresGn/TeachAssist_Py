@@ -2,7 +2,12 @@
   "id": "11-sequence-numerique",
   "name": "Séquence Numérique",
   "description": "Écrire un programme qui affiche des séquences numériques selon différents modèles.",
-  "testInputs": [],
+  "testInputs": [
+    {"value": "", "description": "Pas d'entrée nécessaire, le programme génère les séquences"},
+    {"value": "lignes", "description": "Affichage de la séquence en ligne uniquement"},
+    {"value": "triangle", "description": "Affichage du triangle numérique uniquement"},
+    {"value": "tous", "description": "Affichage de toutes les séquences"}
+  ],
   "rules": {
     "requiredMethods": [
       {

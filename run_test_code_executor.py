@@ -116,7 +116,7 @@ def fix_java_file(file_path: str, temp_dir: str) -> str:
         return file_path  # En cas d'erreur, utiliser le fichier original
 
 def analyze_td4_files():
-    """Exécuter les fichiers Java du dossier TD4 en utilisant la configuration TD4.json"""
+    """Analyze and execute the Java files in TD4 directory."""
     print("\nExécution des fichiers Java du TD4...")
     
     # Ouvrir un fichier pour écrire les résultats
@@ -126,20 +126,32 @@ def analyze_td4_files():
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir)
         
-        # Charger la configuration TD4
-        td4_config_path = os.path.join('assessments', 'TD4.json')
+        # Définir le chemin vers le fichier de configuration TD4
+        td4_config_path = 'assessments/TD4.json'
         if not os.path.exists(td4_config_path):
-            msg = f"Fichier de configuration {td4_config_path} non trouvé"
+            msg = f"Fichier de configuration TD4 non trouvé: {td4_config_path}"
             print(msg)
+            logger.error(msg)
             out_file.write(msg + '\n')
             return
-            
-        with open(td4_config_path, 'r', encoding='utf-8') as f:
-            td4_config = json.load(f)
+                
+        # Initialiser le chargeur de configuration
+        config_loader = ConfigLoader(os.getcwd())
         
-        # Charger toutes les configurations d'exercices
-        config_loader = ConfigLoader()
+        # S'assurer que toutes les configurations sont chargées depuis la base de données
         config_loader.load_all_configs()
+        
+        # Récupérer la configuration TD4 depuis la base de données
+        td4_config = config_loader.get_assessment_config('TD4')
+        
+        if not td4_config:
+            msg = "Configuration TD4 non trouvée dans la base de données"
+            print(msg)
+            logger.error(msg)
+            out_file.write(msg + '\n')
+            return
+        
+        # Récupérer toutes les configurations d'exercices
         exercise_configs = config_loader.get_all_exercise_configs()
         
         # Initialiser l'exécuteur Java
@@ -194,8 +206,8 @@ def analyze_td4_files():
             exercise_config = None
             
             # Essayer de faire correspondre le fichier à un exercice du TD4
-            for exercise in td4_config.get('exercises', []):
-                ex_id = exercise.get('exerciseId', '')
+            for exercise in td4_config.exercises:
+                ex_id = exercise['exerciseId']
                 if ex_id in exercise_configs:
                     config = exercise_configs[ex_id]
                     # Vérifier si le nom du fichier correspond à l'exercice
@@ -314,7 +326,7 @@ def analyze_td4_files():
             logger.error(f"Erreur lors du nettoyage des fichiers temporaires: {str(e)}")
         
         print("\nExécution terminée. Résultats sauvegardés dans execution_results_td4.txt")
-        
+    
 def main():
     """Fonction principale pour exécuter les tests"""
     analyze_td4_files()

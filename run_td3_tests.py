@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 # Import from teach_assit modules
 from teach_assit.core.analysis.static_analyzer import StaticAnalyzer
 from teach_assit.core.analysis.models import ExerciseConfig
+from teach_assit.core.analysis.config_loader import ConfigLoader
 
 # Symboles ASCII pour le rapport
 SYMBOL_OK = "[OK]"
@@ -21,24 +22,36 @@ def analyze_td3_files():
     
     # Ouvrir un fichier pour écrire les résultats
     with open('analysis_results_td3.txt', 'w', encoding='utf-8') as out_file:
-        # Load TD3 configuration
-        td3_config_path = os.path.join('assessments', 'TD3.json')
-        with open(td3_config_path, 'r', encoding='utf-8') as f:
-            td3_config = json.load(f)
+        # Initialiser le chargeur de configuration
+        config_loader = ConfigLoader(os.getcwd())
+        
+        # S'assurer que toutes les configurations sont chargées depuis la base de données
+        config_loader.load_all_configs()
+        
+        # Récupérer la configuration TD3 depuis la base de données
+        td3_config = config_loader.get_assessment_config('TD3')
+        
+        if not td3_config:
+            msg = "Configuration TD3 non trouvée dans la base de données"
+            print(msg)
+            out_file.write(msg + '\n')
+            return
         
         # Initialize analyzer
         analyzer = StaticAnalyzer()
         
         # Analyze each exercise in TD3
-        for exercise in td3_config['exercises']:
+        for exercise in td3_config.exercises:
             exercise_id = exercise['exerciseId']
             
-            # Load exercise config
-            exercise_config_path = os.path.join('configs', f'{exercise_id}.json')
-            with open(exercise_config_path, 'r', encoding='utf-8') as f:
-                config_dict = json.load(f)
+            # Récupérer la configuration de l'exercice depuis la base de données
+            config = config_loader.get_exercise_config(exercise_id)
             
-            config = ExerciseConfig(config_dict)
+            if not config:
+                msg = f"Configuration de l'exercice {exercise_id} non trouvée dans la base de données"
+                print(msg)
+                out_file.write(msg + '\n')
+                continue
             
             # Get all Java files for this exercise
             java_files = glob.glob(f'tests/java_samples/TD3/**/{exercise_id}.java', recursive=True)

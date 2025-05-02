@@ -54,5 +54,80 @@
     ],
     "requiredDomainChecks": [],
     "mathFunctions": []
-  }
+  },
+  "grading_criteria": [
+    {
+      "description": "Implémentation correcte de la méthode calculerMoyenne",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Signature correcte de la méthode (trois paramètres int, retour en double)"
+        },
+        {
+          "text": "Calcul correct de la somme des trois nombres"
+        },
+        {
+          "text": "Division correcte par 3.0 pour obtenir un résultat en double"
+        },
+        {
+          "text": "Gestion correcte des nombres négatifs et des grands nombres"
+        }
+      ],
+      "title": "Implémentation de la méthode"
+    },
+    {
+      "description": "Respect des contraintes imposées",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Utilisation exclusive des opérateurs autorisés (+ et /)"
+        },
+        {
+          "text": "Non-utilisation d'opérateurs interdits"
+        },
+        {
+          "text": "Respect du type de retour double"
+        },
+        {
+          "text": "Respect des conventions de nommage camelCase"
+        }
+      ],
+      "title": "Respect des contraintes"
+    },
+    {
+      "description": "Exactitude du résultat",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Résultat correct pour des nombres simples"
+        },
+        {
+          "text": "Résultat correct pour des nombres négatifs"
+        },
+        {
+          "text": "Résultat correct pour des grands nombres"
+        },
+        {
+          "text": "Précision suffisante du résultat (type double)"
+        }
+      ],
+      "title": "Exactitude des résultats"
+    },
+    {
+      "description": "Qualité et organisation du code",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Organisation logique et claire du code"
+        },
+        {
+          "text": "Lisibilité et maintenabilité"
+        },
+        {
+          "text": "Absence de code redondant ou inutile"
+        }
+      ],
+      "title": "Structure et style de code"
+    }
+  ]
 }

@@ -1,4 +1,4 @@
-Found 8 Java files to analyze:
+Found 16 Java files to analyze:
 
 ==================================================
 ✅ RAPPORT D'ANALYSE: tests/java_samples/TD4\ARES\sequence-numerique-erreur.java (Étudiant: ARES, Exercice: 11-sequence-numerique)
@@ -63,6 +63,43 @@ Found 8 Java files to analyze:
     ❌ Patterns requis manquants
 
 ==================================================
+⚠️ FICHIER IGNORÉ: tests/java_samples/TD4\ARES\_temp_java_files\Exercice2.java (Exercice non identifiable)
+==================================================
+
+==================================================
+✅ RAPPORT D'ANALYSE: tests/java_samples/TD4\ARES\_temp_java_files\SequenceNumeriqueAvecErreur.java (Étudiant: _temp_java_files, Exercice: 11-sequence-numerique)
+==================================================
+
+✅ SYNTAXE: Code valide
+
+✅ MÉTHODES REQUISES:
+  ✅ afficherLigne() -> void
+  ✅ afficherTriangle() -> void
+
+❌ OPÉRATEURS NON AUTORISÉS:
+  ❌ L'opérateur '>' n'est pas autorisé. Utilisez uniquement: +, <=, <, =
+
+✅ MÉTHODES TROUVÉES (correspondant à la signature):
+  ✅ afficherLigne() -> void
+  ✅ afficherTriangle() -> void
+
+⚠️ PATTERNS REQUIS:
+  ❌ Boucle for pour affichage en ligne
+      ⚠️ Vous devez utiliser une boucle for pour afficher les chiffres de 1 à 9 en ligne.
+  ✅ Utilisation de System.out.print pour l'affichage en ligne
+  ❌ Boucles imbriquées pour le triangle
+      ⚠️ Vous devez utiliser des boucles for imbriquées pour créer le triangle numérique.
+  ✅ Ajout d'un saut de ligne après chaque ligne du triangle
+
+✅ STRUCTURES DE CONTRÔLE REQUISES:
+  ✅ Structures trouvées: for
+
+❌ RÉSULTAT GLOBAL: DES PROBLÈMES ONT ÉTÉ DÉTECTÉS
+  Détail des problèmes:
+    ❌ Patterns requis manquants
+    ❌ Utilisation d'opérateurs non autorisés
+
+==================================================
 ✅ RAPPORT D'ANALYSE: tests/java_samples/TD4\CARLOS\sequence-numerique-do-while.java (Étudiant: CARLOS, Exercice: 11-sequence-numerique)
 ==================================================
 
@@ -104,6 +141,75 @@ Found 8 Java files to analyze:
 
 ==================================================
 ✅ RAPPORT D'ANALYSE: tests/java_samples/TD4\CARLOS\triangle-isocele.java (Étudiant: CARLOS, Exercice: 12-triangle-isocele)
+==================================================
+
+✅ SYNTAXE: Code valide
+
+✅ MÉTHODES REQUISES:
+  ✅ afficherTriangleIsocele(int) -> void
+
+✅ MÉTHODES TROUVÉES (correspondant à la signature):
+  ✅ afficherTriangleIsocele(int) -> void
+
+⚠️ PATTERNS REQUIS:
+  ✅ Lecture du nombre de lignes depuis l'entrée standard
+  ✅ Boucles imbriquées pour créer le triangle
+  ❌ Boucle pour les espaces
+      ⚠️ Vous devez utiliser une boucle pour afficher les espaces avant les étoiles.
+  ❌ Boucle pour les étoiles
+      ⚠️ Vous devez utiliser une boucle pour afficher les étoiles.
+  ✅ Calcul correct du nombre d'étoiles par ligne
+  ✅ Saut de ligne après chaque ligne du triangle
+
+✅ STRUCTURES DE CONTRÔLE REQUISES:
+  ✅ Structures trouvées: for
+
+❌ RÉSULTAT GLOBAL: DES PROBLÈMES ONT ÉTÉ DÉTECTÉS
+  Détail des problèmes:
+    ❌ Patterns requis manquants
+
+==================================================
+✅ RAPPORT D'ANALYSE: tests/java_samples/TD4\CARLOS\_temp_java_files\SequenceNumeriqueDoWhile.java (Étudiant: _temp_java_files, Exercice: 11-sequence-numerique)
+==================================================
+
+✅ SYNTAXE: Code valide
+
+✅ MÉTHODES REQUISES:
+  ✅ afficherLigne() -> void
+  ✅ afficherTriangle() -> void
+
+❌ OPÉRATEURS NON AUTORISÉS:
+  ❌ L'opérateur '!=' n'est pas autorisé. Utilisez uniquement: +, <=, <, =
+  ❌ L'opérateur '>' n'est pas autorisé. Utilisez uniquement: +, <=, <, =
+  ❌ L'opérateur '>=' n'est pas autorisé. Utilisez uniquement: +, <=, <, =
+  ❌ L'opérateur '&&' n'est pas autorisé. Utilisez uniquement: +, <=, <, =
+  ❌ L'opérateur '!' n'est pas autorisé. Utilisez uniquement: +, <=, <, =
+  ❌ L'opérateur '&' n'est pas autorisé. Utilisez uniquement: +, <=, <, =
+  ❌ L'opérateur '&' n'est pas autorisé. Utilisez uniquement: +, <=, <, =
+
+✅ MÉTHODES TROUVÉES (correspondant à la signature):
+  ✅ afficherLigne() -> void
+  ✅ afficherTriangle() -> void
+
+⚠️ PATTERNS REQUIS:
+  ❌ Boucle for pour affichage en ligne
+      ⚠️ Vous devez utiliser une boucle for pour afficher les chiffres de 1 à 9 en ligne.
+  ✅ Utilisation de System.out.print pour l'affichage en ligne
+  ❌ Boucles imbriquées pour le triangle
+      ⚠️ Vous devez utiliser des boucles for imbriquées pour créer le triangle numérique.
+  ✅ Ajout d'un saut de ligne après chaque ligne du triangle
+
+❌ STRUCTURES DE CONTRÔLE REQUISES:
+  ❌ Structures manquantes: for
+
+❌ RÉSULTAT GLOBAL: DES PROBLÈMES ONT ÉTÉ DÉTECTÉS
+  Détail des problèmes:
+    ❌ Patterns requis manquants
+    ❌ Utilisation d'opérateurs non autorisés
+    ❌ Structures de contrôle requises manquantes
+
+==================================================
+✅ RAPPORT D'ANALYSE: tests/java_samples/TD4\CARLOS\_temp_java_files\TriangleIsocele.java (Étudiant: _temp_java_files, Exercice: 12-triangle-isocele)
 ==================================================
 
 ✅ SYNTAXE: Code valide
@@ -186,6 +292,35 @@ Found 8 Java files to analyze:
     ❌ Patterns requis manquants
 
 ==================================================
+⚠️ FICHIER IGNORÉ: tests/java_samples/TD4\KARL\_temp_java_files\Exercice2.java (Exercice non identifiable)
+==================================================
+
+==================================================
+✅ RAPPORT D'ANALYSE: tests/java_samples/TD4\KARL\_temp_java_files\SequenceNumerique.java (Étudiant: _temp_java_files, Exercice: 11-sequence-numerique)
+==================================================
+
+✅ SYNTAXE: Code valide
+
+✅ MÉTHODES REQUISES:
+  ✅ afficherLigne() -> void
+  ✅ afficherTriangle() -> void
+
+✅ MÉTHODES TROUVÉES (correspondant à la signature):
+  ✅ afficherLigne() -> void
+  ✅ afficherTriangle() -> void
+
+✅ PATTERNS REQUIS:
+  ✅ Boucle for pour affichage en ligne
+  ✅ Utilisation de System.out.print pour l'affichage en ligne
+  ✅ Boucles imbriquées pour le triangle
+  ✅ Ajout d'un saut de ligne après chaque ligne du triangle
+
+✅ STRUCTURES DE CONTRÔLE REQUISES:
+  ✅ Structures trouvées: for
+
+✅ RÉSULTAT GLOBAL: SUCCÈS
+
+==================================================
 ✅ RAPPORT D'ANALYSE: tests/java_samples/TD4\SARAH\sequence-numerique-while.java (Étudiant: SARAH, Exercice: 11-sequence-numerique)
 ==================================================
 
@@ -242,3 +377,36 @@ Found 8 Java files to analyze:
   Détail des problèmes:
     ❌ Méthodes requises manquantes
     ❌ Patterns requis manquants
+
+==================================================
+⚠️ FICHIER IGNORÉ: tests/java_samples/TD4\SARAH\_temp_java_files\Exercice2.java (Exercice non identifiable)
+==================================================
+
+==================================================
+✅ RAPPORT D'ANALYSE: tests/java_samples/TD4\SARAH\_temp_java_files\SequenceNumeriqueWhile.java (Étudiant: _temp_java_files, Exercice: 11-sequence-numerique)
+==================================================
+
+✅ SYNTAXE: Code valide
+
+⚠️ MÉTHODES REQUISES:
+  ❌ afficherLigne() -> void
+  ❌ afficherTriangle() -> void
+
+⚠️ AUCUNE MÉTHODE TROUVÉE avec signature correspondante.
+
+⚠️ PATTERNS REQUIS:
+  ❌ Boucle for pour affichage en ligne
+      ⚠️ Vous devez utiliser une boucle for pour afficher les chiffres de 1 à 9 en ligne.
+  ✅ Utilisation de System.out.print pour l'affichage en ligne
+  ❌ Boucles imbriquées pour le triangle
+      ⚠️ Vous devez utiliser des boucles for imbriquées pour créer le triangle numérique.
+  ✅ Ajout d'un saut de ligne après chaque ligne du triangle
+
+❌ STRUCTURES DE CONTRÔLE REQUISES:
+  ❌ Structures manquantes: for
+
+❌ RÉSULTAT GLOBAL: DES PROBLÈMES ONT ÉTÉ DÉTECTÉS
+  Détail des problèmes:
+    ❌ Méthodes requises manquantes
+    ❌ Patterns requis manquants
+    ❌ Structures de contrôle requises manquantes

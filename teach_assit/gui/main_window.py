@@ -850,13 +850,104 @@ class MainWindow(QMainWindow):
             return
         
         # Récupérer les dossiers d'étudiants
-        student_folders = self.submission_manager.get_student_folders()
-        if not student_folders:
+        all_student_folders = self.submission_manager.get_student_folders()
+        if not all_student_folders:
             QMessageBox.warning(self, "Aucune soumission", "Aucune soumission extraite à analyser.")
             return
         
+        # Créer un dictionnaire de correspondance entre mots-clés et exercices
+        exercise_keywords = {}
+        exercise_ids = []
+        for ex in assessment.exercises:
+            ex_id = ex.get('exerciseId', '')
+            if ex_id:
+                exercise_ids.append(ex_id)
+                # Extraire des mots-clés de l'ID de l'exercice
+                if '-' in ex_id:
+                    keyword = ex_id.split('-', 1)[1].lower()
+                else:
+                    keyword = ex_id.lower()
+                exercise_keywords[keyword] = ex_id
+        
+        # DEBUG: Afficher les IDs d'exercices pour cette évaluation
+        print(f"\n======= DEBUG: Exercices de l'évaluation {assessment.name} ({assessment_id}) =======")
+        print(f"IDs d'exercices: {exercise_ids}")
+        print(f"Mots-clés: {list(exercise_keywords.keys())}")
+        print("=====================================================================\n")
+        
+        # Filtrer les étudiants ayant des fichiers correspondant à l'évaluation sélectionnée
+        filtered_students = {}
+        for student_name, info in all_student_folders.items():
+            java_files = info.get('java_files', [])
+            
+            # Filtrer les fichiers par exercice
+            filtered_files = []
+            
+            for java_file in java_files:
+                java_file_lower = java_file.lower()
+                
+                # Vérifier si le fichier correspond à l'un des exercices de l'évaluation
+                matches_exercise = False
+                matching_exercise_id = None
+                
+                # Méthode 1: Correspondance directe avec l'ID d'exercice
+                for ex in assessment.exercises:
+                    ex_id = ex.get('exerciseId', '')
+                    if ex_id and ex_id.lower() in java_file_lower:
+                        matches_exercise = True
+                        matching_exercise_id = ex_id
+                        break
+                
+                # Méthode 2: Correspondance avec les mots-clés extraits
+                if not matches_exercise:
+                    for keyword, ex_id in exercise_keywords.items():
+                        if keyword in java_file_lower:
+                            matches_exercise = True
+                            matching_exercise_id = ex_id
+                            break
+                        
+                        # Vérifier aussi le nom de base du fichier
+                        base_name = os.path.splitext(os.path.basename(java_file_lower))[0]
+                        if keyword in base_name:
+                            matches_exercise = True
+                            matching_exercise_id = ex_id
+                            break
+                
+                # Méthode 3: Cas spéciaux
+                if not matches_exercise:
+                    if "intervalle" in java_file_lower and any("intervalle" in kw for kw in exercise_keywords):
+                        matches_exercise = True
+                        matching_exercise_id = next((ex_id for ex_id in exercise_ids if "intervalle" in ex_id), None)
+                    elif ("fonction" in java_file_lower or "log" in java_file_lower) and any(("fonction" in kw or "log" in kw) for kw in exercise_keywords):
+                        matches_exercise = True
+                        matching_exercise_id = next((ex_id for ex_id in exercise_ids if "fonction" in ex_id or "log" in ex_id), None)
+                
+                # Si le fichier correspond à un exercice de l'évaluation, l'ajouter à la liste filtrée
+                if matches_exercise:
+                    # DEBUG: Afficher la correspondance trouvée
+                    print(f"Fichier correspondant: {java_file} -> Exercice: {matching_exercise_id}")
+                    filtered_files.append(java_file)
+                else:
+                    print(f"Fichier ignoré (pas de correspondance): {java_file}")
+            
+            # Si l'étudiant a des fichiers correspondant aux exercices, l'ajouter à la liste
+            if filtered_files:
+                filtered_info = info.copy()
+                filtered_info['java_files'] = filtered_files
+                filtered_students[student_name] = filtered_info
+        
+        if not filtered_students:
+            QMessageBox.warning(self, "Aucune soumission correspondante", f"Aucune soumission ne correspond à l'évaluation {assessment.name}.")
+            return
+        
+        # DEBUG: Résumé des étudiants et fichiers filtrés
+        print(f"\n======= DEBUG: Résumé des étudiants filtrés pour {assessment.name} =======")
+        for student, info in filtered_students.items():
+            print(f"Étudiant: {student}, Fichiers: {info['java_files']}")
+        print("=====================================================================\n")
+        
         # Créer une boîte de dialogue de progression
-        progress = QProgressDialog("Analyse des soumissions en cours...", "Annuler", 0, len(student_folders), self)
+        progress = QProgressDialog("Analyse des soumissions en cours...", "Annuler", 0, len(filtered_students), self)
         progress.setWindowTitle("Analyse en cours")
         progress.setWindowModality(Qt.WindowModal)
         progress.show()
@@ -867,22 +958,17 @@ class MainWindow(QMainWindow):
         # Dictionnaire pour stocker les résultats d'analyse
         analysis_results = {}
         
-        # Créer un dictionnaire de correspondance entre mots-clés et exercices
-        exercise_keywords = {}
+        # Préparer les configurations d'exercices pour l'analyse
+        exercise_configs = {}
         for ex in assessment.exercises:
             ex_id = ex.get('exerciseId', '')
-            if ex_id:
-                # Extraire des mots-clés de l'ID de l'exercice
-                # Par exemple, '02-intervalle' donne 'intervalle'
-                if '-' in ex_id:
-                    keyword = ex_id.split('-', 1)[1].lower()
-                else:
-                    keyword = ex_id.lower()
-                exercise_keywords[keyword] = ex_id
+            config = self.config_loader.get_exercise_config(ex_id)
+            if config:
+                exercise_configs[ex_id] = config
         
         # Analyser chaque soumission d'étudiant
         student_count = 0
-        for student_name, info in student_folders.items():
+        for student_name, info in filtered_students.items():
             if progress.wasCanceled():
                 break
             
@@ -892,7 +978,7 @@ class MainWindow(QMainWindow):
             # Mise à jour de l'interface
             QApplication.processEvents()
             
-            # Récupérer les fichiers Java de l'étudiant
+            # Récupérer les fichiers Java de l'étudiant (déjà filtrés)
             java_files = info.get('java_files', [])
             student_dir = info.get('path', '')
             student_results = {}
@@ -942,54 +1028,66 @@ class MainWindow(QMainWindow):
                                     exercise_id = ex_id
                                     break
                     
-                    # Si aucune correspondance, utiliser le premier exercice de l'évaluation
-                    if not exercise_id and assessment.exercises:
-                        exercise_id = assessment.exercises[0].get('exerciseId', '')
-                        print(f"Aucune correspondance trouvée pour {java_file}, utilisation de l'exercice par défaut: {exercise_id}")
+                    # Si aucune correspondance, ignorer ce fichier
+                    if not exercise_id:
+                        print(f"ERREUR: {java_file} n'a pas d'exercice associé lors de l'analyse!")
+                        continue
                     
                     # Obtenir la configuration de l'exercice
-                    exercise_config = self.config_loader.get_exercise_config(exercise_id)
+                    exercise_config = exercise_configs.get(exercise_id)
                     if not exercise_config:
-                        student_results[java_file] = {
-                            'error': f"Configuration d'exercice '{exercise_id}' introuvable"
-                        }
-                        continue
+                        print(f"ERREUR: Configuration introuvable pour l'exercice {exercise_id}")
+                        continue  # Ignorer ce fichier si la configuration n'est pas trouvée
                     
                     # Analyser le code
                     result = analyzer.analyze_code(code, exercise_config)
+                    
+                    # Enrichir les résultats avec l'ID de l'exercice pour faciliter le filtrage ultérieur
+                    result['exerciseId'] = exercise_id
                     student_results[java_file] = result
                     
                 except Exception as e:
                     student_results[java_file] = {
-                        'error': f"Erreur lors de l'analyse: {str(e)}"
+                        'error': f"Erreur lors de l'analyse: {str(e)}",
+                        'exerciseId': exercise_id  # Peut être None si non déterminé
                     }
             
-            # Stocker les résultats pour cet étudiant
-            analysis_results[student_name] = student_results
+            # Stocker les résultats pour cet étudiant uniquement s'il a des fichiers analysés
+            if student_results:
+                analysis_results[student_name] = student_results
             student_count += 1
         
         # Fermer la boîte de dialogue de progression
-        progress.setValue(len(student_folders))
+        progress.setValue(len(filtered_students))
+        
+        if not analysis_results:
+            QMessageBox.warning(self, "Aucun résultat", f"Aucun fichier n'a pu être analysé pour l'évaluation {assessment.name}.")
+            return
+        
+        # DEBUG: Vérifier ce qui va être envoyé à results_tab.update_analysis_results
+        print(f"\n======= DEBUG: Résultats d'analyse avant envoi à ResultsWidget =======")
+        for student, files in analysis_results.items():
+            print(f"Étudiant: {student}")
+            for file, result in files.items():
+                exercise_id = result.get('exerciseId', 'NON SPÉCIFIÉ')
+                print(f"  - Fichier: {file}, Exercice: {exercise_id}")
+                if 'error' in result:
+                    print(f"    Erreur: {result['error']}")
+                else:
+                    print(f"    Valide: {result.get('is_valid', False)}")
+        print("=====================================================================\n")
         
         # Mettre à jour l'interface avec les résultats d'analyse
         self.update_analysis_results(analysis_results)
         
-        # Préparer les configurations d'exercices pour l'affichage dans l'onglet Résultats
-        exercise_configs = {}
-        for ex in assessment.exercises:
-            ex_id = ex.get('exerciseId', '')
-            config = self.config_loader.get_exercise_config(ex_id)
-            if config:
-                exercise_configs[ex_id] = config
-        
-        # Mettre à jour l'onglet des résultats
+        # Mettre à jour l'onglet des résultats avec uniquement les résultats pertinents pour cette évaluation
         self.results_tab.update_analysis_results(analysis_results, assessment.name, exercise_configs)
         
         # Basculer vers l'onglet des résultats pour afficher les résultats détaillés
         self.switch_page(3)  # L'index de l'onglet Résultats
         
         # Message de confirmation
-        self.statusBar.showMessage(f"Analyse terminée pour {len(analysis_results)} soumission(s)")
+        self.statusBar.showMessage(f"Analyse terminée pour {len(analysis_results)} soumission(s) correspondant à l'évaluation {assessment.name}")
     
     def update_analysis_results(self, analysis_results):
         """Mettre à jour l'interface avec les résultats d'analyse."""

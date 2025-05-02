@@ -1,0 +1,132 @@
+
+==================== EXERCICE: Fonction Racine Carrée (ID: 09-fonction-racine-carree) ====================
+Found 2 Java files to analyze:
+
+==================================================
+[OK] RAPPORT D'ANALYSE: tests/java_samples/TD3\Etudiant1\09-fonction-racine-carree.java (Étudiant: Etudiant1)
+==================================================
+
+[OK] SYNTAXE: Code valide
+
+[OK] MÉTHODES REQUISES:
+  [OK] calculerRacineCarree(double) -> double
+
+[OK] STRUCTURES DE CONTRÔLE:
+  [OK] Structures trouvées: if
+
+[OK] CONVENTIONS DE NOMMAGE:
+  [OK] Toutes les conventions de nommage sont respectées.
+
+[OK] PORTÉE DES VARIABLES:
+  [OK] Aucun problème de portée de variables détecté.
+
+[OK] PATTERNS REQUIS:
+  [OK] Vérification que le nombre est positif ou nul
+  [OK] Utilisation de Math.sqrt
+  [OK] Gestion du cas où le nombre est négatif
+
+==============================
+RÉSUMÉ GLOBAL: 7/7 vérifications réussies
+NOTE ESTIMÉE: 10.0/10 points
+
+==================================================
+[OK] RAPPORT D'ANALYSE: tests/java_samples/TD3\Etudiant2\09-fonction-racine-carree.java (Étudiant: Etudiant2)
+==================================================
+
+[OK] SYNTAXE: Code valide
+
+[OK] MÉTHODES REQUISES:
+  [OK] calculerRacineCarree(double) -> double
+
+[FAIL] STRUCTURES DE CONTRÔLE:
+  [FAIL] Structures manquantes: if
+
+[FAIL] CONVENTIONS DE NOMMAGE:
+  [FAIL] Le nom de variable 'Resultat' ne respecte pas la convention camelCase
+  [FAIL] Le nom de variable 'Compteur' ne respecte pas la convention camelCase
+
+[OK] PORTÉE DES VARIABLES:
+  [OK] Aucun problème de portée de variables détecté.
+
+[FAIL] PATTERNS REQUIS:
+  [FAIL] Vérification que le nombre est positif ou nul
+      [WARN] Vous devez vérifier que le nombre est positif ou nul avant de calculer la racine carrée.
+  [OK] Utilisation de Math.sqrt
+  [FAIL] Gestion du cas où le nombre est négatif
+      [WARN] Vous devez gérer le cas où le nombre est négatif en renvoyant une valeur spéciale ou en levant une exception.
+
+[WARN] SUGGESTIONS D'AMÉLIORATION:
+  [WARN] Les structures de contrôle suivantes sont requises mais manquantes: if
+  [WARN] Vérifiez que vos identifiants respectent les conventions de nommage spécifiées.
+
+==============================
+RÉSUMÉ GLOBAL: 4/7 vérifications réussies
+NOTE ESTIMÉE: 5.7/10 points
+
+==================== EXERCICE: Comptage de Mots (ID: 10-comptage-mots) ====================
+Found 2 Java files to analyze:
+
+==================================================
+[OK] RAPPORT D'ANALYSE: tests/java_samples/TD3\Etudiant1\10-comptage-mots.java (Étudiant: Etudiant1)
+==================================================
+
+[OK] SYNTAXE: Code valide
+
+[OK] MÉTHODES REQUISES:
+  [OK] compterMots(String) -> int
+
+[OK] STRUCTURES DE CONTRÔLE:
+  [OK] Structures trouvées: if, for
+
+[OK] CONVENTIONS DE NOMMAGE:
+  [OK] Toutes les conventions de nommage sont respectées.
+
+[OK] PORTÉE DES VARIABLES:
+  [OK] Aucun problème de portée de variables détecté.
+
+[FAIL] OPÉRATEURS NON AUTORISÉS:
+  [FAIL] L'opérateur '|' n'est pas autorisé. Utilisez uniquement: ==, !=, +, ++, +=, ||
+  [FAIL] L'opérateur '|' n'est pas autorisé. Utilisez uniquement: ==, !=, +, ++, +=, ||
+
+[OK] PATTERNS REQUIS:
+  [OK] Gestion des chaînes vides ou nulles
+  [OK] Utilisation de split ou StringTokenizer
+
+==============================
+RÉSUMÉ GLOBAL: 6/7 vérifications réussies
+NOTE ESTIMÉE: 8.6/10 points
+
+==================================================
+[OK] RAPPORT D'ANALYSE: tests/java_samples/TD3\Etudiant2\10-comptage-mots.java (Étudiant: Etudiant2)
+==================================================
+
+[OK] SYNTAXE: Code valide
+
+[OK] MÉTHODES REQUISES:
+  [OK] compterMots(String) -> int
+
+[OK] STRUCTURES DE CONTRÔLE:
+  [OK] Structures trouvées: if, for
+
+[OK] CONVENTIONS DE NOMMAGE:
+  [OK] Toutes les conventions de nommage sont respectées.
+
+[OK] PORTÉE DES VARIABLES:
+  [OK] Aucun problème de portée de variables détecté.
+
+[FAIL] OPÉRATEURS NON AUTORISÉS:
+  [FAIL] L'opérateur '<' n'est pas autorisé. Utilisez uniquement: ==, !=, +, ++, +=, ||
+  [FAIL] L'opérateur '|' n'est pas autorisé. Utilisez uniquement: ==, !=, +, ++, +=, ||
+  [FAIL] L'opérateur '|' n'est pas autorisé. Utilisez uniquement: ==, !=, +, ++, +=, ||
+  [FAIL] L'opérateur '|' n'est pas autorisé. Utilisez uniquement: ==, !=, +, ++, +=, ||
+  [FAIL] L'opérateur '|' n'est pas autorisé. Utilisez uniquement: ==, !=, +, ++, +=, ||
+
+[FAIL] PATTERNS REQUIS:
+  [FAIL] Gestion des chaînes vides ou nulles
+      [WARN] Vous devez vérifier si la chaîne est vide ou null avant de traiter.
+  [FAIL] Utilisation de split ou StringTokenizer
+      [WARN] Vous devriez utiliser split() ou StringTokenizer pour découper la chaîne en mots.
+
+==============================
+RÉSUMÉ GLOBAL: 5/7 vérifications réussies
+NOTE ESTIMÉE: 7.1/10 points

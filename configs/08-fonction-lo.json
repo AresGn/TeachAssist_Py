@@ -2,6 +2,14 @@
   "id": "08-fonction-lo",
   "name": "Fonction Logarithme Népérien",
   "description": " Implémenter une méthode qui calcule log(x). Gérer le domaine de définition (x > 0).",
+  "testInputs": [
+    {"value": "1", "description": "Logarithme de 1 (résultat = 0)"},
+    {"value": "2.718281828459045", "description": "Logarithme de e (résultat ≈ 1)"},
+    {"value": "10", "description": "Logarithme de 10"},
+    {"value": "0", "description": "Valeur invalide (x=0)"},
+    {"value": "-5", "description": "Valeur invalide (x<0)"},
+    {"value": "1000", "description": "Grande valeur positive"}
+  ],
   "rules": {
     "requiredMethods": [
       {
@@ -12,6 +20,10 @@
         "returnType": "double"
       }
     ],
+    "allowedOperators": [],
+    "requiredControlStructures": ["if"],
+    "checkVariableScope": false,
+    "checkNamingConventions": ["camelCase"],
     "customPatterns": [
       {
         "description": "Une vérification explicite pour x <= 0 est requise avant d'appeler Math.log.",
@@ -24,6 +36,86 @@
         "pattern": "Math\\\\.log\\\\s*\\\\(",
         "required": true
       }
-    ]
-  }
+    ],
+    "requiredDomainChecks": [
+      {
+        "description": "Vérification que x est strictement positif",
+        "condition": "x > 0",
+        "errorMessage": "Le logarithme n'est défini que pour les valeurs strictement positives."
+      }
+    ],
+    "mathFunctions": [
+      {
+        "name": "Math.log",
+        "params": []
+      }
+    ],
+    "exceptionHandling": {
+      "requiredTryCatch": false,
+      "specificExceptions": []
+    }
+  },
+  "grading_criteria": [
+    {
+      "description": "Implémentation correcte de la méthode logarithmeNeperien",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Signature correcte de la méthode (paramètre double, retour double)"
+        },
+        {
+          "text": "Utilisation correcte de Math.log pour le calcul du logarithme"
+        }
+      ],
+      "title": "Implémentation de base"
+    },
+    {
+      "description": "Vérification du domaine de définition",
+      "points": 7,
+      "subcriteria": [
+        {
+          "text": "Vérification explicite que x est strictement positif"
+        },
+        {
+          "text": "Traitement approprié des cas x <= 0"
+        },
+        {
+          "text": "Retour d'une valeur d'erreur ou exception appropriée pour x <= 0"
+        }
+      ],
+      "title": "Gestion du domaine de définition"
+    },
+    {
+      "description": "Exactitude du résultat",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Résultat correct pour x = 1 (log(1) = 0)"
+        },
+        {
+          "text": "Résultat correct pour x = e (log(e) ≈ 1)"
+        },
+        {
+          "text": "Résultat correct pour d'autres valeurs positives"
+        }
+      ],
+      "title": "Exactitude des résultats"
+    },
+    {
+      "description": "Qualité et organisation du code",
+      "points": 3,
+      "subcriteria": [
+        {
+          "text": "Code bien structuré et organisé"
+        },
+        {
+          "text": "Commentaires pertinents si nécessaire"
+        },
+        {
+          "text": "Utilisation appropriée des exceptions ou des valeurs d'erreur"
+        }
+      ],
+      "title": "Structure et style de code"
+    }
+  ]
 }

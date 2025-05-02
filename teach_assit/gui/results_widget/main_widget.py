@@ -428,15 +428,29 @@ class ResultsWidget(QWidget):
                     # Nom du fichier et exercice associé
                     file_name = os.path.basename(file_path)
                     
-                    # Déterminer l'exercice associé
-                    exercise_id = "Non spécifié"
-                    for ex_id in exercise_configs.keys():
-                        if ex_id.lower() in file_path.lower() or ex_id.split('-')[-1].lower() in file_path.lower():
-                            exercise_id = ex_id
-                            break
+                    # Utiliser l'ID d'exercice stocké dans le résultat de l'analyse
+                    # ou le déterminer à partir du chemin du fichier si non disponible
+                    exercise_id = result.get('exerciseId', None)
                     
+                    # Si l'ID d'exercice n'est pas spécifié dans le résultat, essayer de le déterminer
+                    if not exercise_id:
+                        # Utiliser uniquement les exercices spécifiés dans exercise_configs
+                        for ex_id in exercise_configs.keys():
+                            if ex_id.lower() in file_path.lower() or ex_id.split('-')[-1].lower() in file_path.lower():
+                                exercise_id = ex_id
+                                break
+                        
+                        # Si toujours pas d'exercice associé, marquer comme "Non spécifié"
+                        if not exercise_id:
+                            exercise_id = "Non spécifié"
+                    
+                    # Vérifier si la configuration d'exercice existe
                     exercise_config = exercise_configs.get(exercise_id)
-                    exercise_name = exercise_config.name if exercise_config else "Inconnu"
+                    if not exercise_config:
+                        # Si exercice non trouvé dans les configurations, ce n'est pas pertinent pour cette évaluation
+                        continue
+                    
+                    exercise_name = exercise_config.name
                     
                     # Widget pour l'exercice
                     exercise_widget = ExerciseWidget(
@@ -529,6 +543,21 @@ class ResultsWidget(QWidget):
                 
                 current_row += num_exercises
         
+        # Réajuster le tableau après avoir potentiellement filtré des lignes
+        if self.results_table.rowCount() > current_row:
+            self.results_table.setRowCount(current_row)
+        
+        # Afficher un message si aucun résultat
+        if current_row == 0:
+            self.results_table.setRowCount(1)
+            info_item = QTableWidgetItem(f"Aucun résultat pour l'évaluation {assessment_name}")
+            font = info_item.font()
+            font.setItalic(True)
+            info_item.setFont(font)
+            info_item.setTextAlignment(Qt.AlignCenter)
+            self.results_table.setSpan(0, 0, 1, 5)
+            self.results_table.setItem(0, 0, info_item)
+        
         # Ajuster les hauteurs de ligne pour le contenu
         for i in range(self.results_table.rowCount()):
             self.results_table.setRowHeight(i, 90)  # Augmenter légèrement la hauteur pour mieux afficher le contenu
@@ -557,9 +586,13 @@ class ResultsWidget(QWidget):
         self.execute_button.setEnabled(False)
         self.execute_button.setText("Exécution en cours...")
         
-        # Initialiser le chargeur de configurations
-        config_loader = ConfigLoader()
+        # Initialiser le chargeur de configurations avec le répertoire courant
+        config_loader = ConfigLoader(os.getcwd())
+        
+        # S'assurer que toutes les configurations sont chargées depuis la base de données
         config_loader.load_all_configs()
+        
+        # Récupérer toutes les configurations d'exercices depuis la base de données
         exercise_configs = config_loader.get_all_exercise_configs()
         
         # Structure de données pour stocker les résultats

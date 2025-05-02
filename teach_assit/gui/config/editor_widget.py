@@ -304,24 +304,40 @@ class ConfigEditorWidget(QWidget):
     
     def load_configs(self):
         """Charger les configurations existantes."""
-        exercise_count, assessment_count = self.config_loader.load_all_configs()
+        # Importer d'abord les configurations des fichiers JSON vers la base de données
+        exercise_count, assessment_count = self.config_loader.import_configs_to_database()
+        # Message supprimé pour éviter l'affichage à chaque démarrage
         
-        # Charger les exercices
+        # Charger toutes les configurations depuis la base de données
+        exercises, assessments = self.config_loader.load_all_configs()
+        
+        # Mettre à jour la liste des exercices
         self.exercise_list.clear()
         for exercise_id, config in self.config_loader.get_all_exercise_configs().items():
-            item = QListWidgetItem(f"{config.name} ({exercise_id})")
+            item = QListWidgetItem(config.name)
             item.setData(Qt.UserRole, exercise_id)
             self.exercise_list.addItem(item)
         
-        # Charger les évaluations
+        # Mettre à jour la liste des évaluations
         self.assessment_list.clear()
         for assessment_id, config in self.config_loader.get_all_assessment_configs().items():
-            item = QListWidgetItem(f"{config.name} ({assessment_id})")
+            item = QListWidgetItem(config.name)
             item.setData(Qt.UserRole, assessment_id)
             self.assessment_list.addItem(item)
-        
-        # Mettre à jour le formulaire d'évaluation avec la liste des exercices
-        self.assessment_form.update_exercise_list()
+            
+        # Si au moins un exercice, le sélectionner
+        if self.exercise_list.count() > 0:
+            self.exercise_list.setCurrentRow(0)
+        else:
+            self.exercise_form.clear()
+            self.delete_exercise_button.setEnabled(False)
+            
+        # Si au moins une évaluation, la sélectionner
+        if self.assessment_list.count() > 0:
+            self.assessment_list.setCurrentRow(0)
+        else:
+            self.assessment_form.clear()
+            self.delete_assessment_button.setEnabled(False)
     
     def on_exercise_selected(self, item):
         """Appelé quand un exercice est sélectionné dans la liste."""

@@ -42,5 +42,68 @@
     ],
     "requiredDomainChecks": [],
     "mathFunctions": []
-  }
+  },
+  "grading_criteria": [
+    {
+      "description": "Implémentation correcte de la méthode estMajeur",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Signature correcte de la méthode (paramètre int, retour boolean)"
+        },
+        {
+          "text": "Vérification correcte de la condition d'âge >= 18"
+        },
+        {
+          "text": "Utilisation appropriée des opérateurs de comparaison"
+        }
+      ],
+      "title": "Implémentation de la méthode"
+    },
+    {
+      "description": "Respect des contraintes imposées",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Utilisation exclusive des opérateurs autorisés (>= et <)"
+        },
+        {
+          "text": "Utilisation appropriée de la structure de contrôle if"
+        },
+        {
+          "text": "Respect du type de retour boolean"
+        }
+      ],
+      "title": "Respect des contraintes"
+    },
+    {
+      "description": "Traitement des cas particuliers",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Gestion correcte de l'âge limite (18 ans)"
+        },
+        {
+          "text": "Bonus: Vérification de la validité de l'âge (âge négatif)"
+        }
+      ],
+      "title": "Gestion des cas particuliers"
+    },
+    {
+      "description": "Exactitude du résultat",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Résultat correct pour un âge mineur"
+        },
+        {
+          "text": "Résultat correct pour un âge majeur"
+        },
+        {
+          "text": "Résultat correct pour l'âge limite (18 ans)"
+        }
+      ],
+      "title": "Exactitude des résultats"
+    }
+  ]
 }

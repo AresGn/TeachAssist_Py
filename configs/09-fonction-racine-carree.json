@@ -2,7 +2,14 @@
   "id": "09-fonction-racine-carree",
   "name": "Fonction Racine Carrée",
   "description": "Écrire une méthode qui calcule la racine carrée d'un nombre en vérifiant que le nombre est positif ou nul.",
-  "testInputs": [],
+  "testInputs": [
+    {"value": "4", "description": "Racine carrée de 4 (résultat = 2)"},
+    {"value": "0", "description": "Racine carrée de 0 (résultat = 0)"},
+    {"value": "9", "description": "Racine carrée de 9 (résultat = 3)"},
+    {"value": "-4", "description": "Valeur invalide (nombre négatif)"},
+    {"value": "2", "description": "Racine carrée de 2 (résultat irrationnel)"},
+    {"value": "100", "description": "Racine carrée de 100 (résultat = 10)"}
+  ],
   "rules": {
     "requiredMethods": [
       {
@@ -65,5 +72,67 @@
       "specificExceptions": []
     }
   },
-  "grading_criteria": []
+  "grading_criteria": [
+    {
+      "description": "Implémentation correcte de la méthode calculerRacineCarree",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Signature correcte de la méthode (paramètre double, retour double)"
+        },
+        {
+          "text": "Utilisation correcte de Math.sqrt pour le calcul de la racine carrée"
+        }
+      ],
+      "title": "Implémentation de base"
+    },
+    {
+      "description": "Vérification du domaine de définition",
+      "points": 7,
+      "subcriteria": [
+        {
+          "text": "Vérification que le nombre est positif ou nul"
+        },
+        {
+          "text": "Traitement approprié des cas où le nombre est négatif"
+        },
+        {
+          "text": "Retour d'une valeur d'erreur ou exception appropriée pour les nombres négatifs"
+        }
+      ],
+      "title": "Gestion du domaine de définition"
+    },
+    {
+      "description": "Exactitude du résultat",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Résultat correct pour les nombres positifs parfaits (4, 9, 16, etc.)"
+        },
+        {
+          "text": "Résultat correct pour 0"
+        },
+        {
+          "text": "Résultat correct pour les nombres positifs non parfaits (2, 3, 5, etc.)"
+        }
+      ],
+      "title": "Exactitude des résultats"
+    },
+    {
+      "description": "Qualité et organisation du code",
+      "points": 3,
+      "subcriteria": [
+        {
+          "text": "Code bien structuré et organisé"
+        },
+        {
+          "text": "Respect des conventions de nommage camelCase"
+        },
+        {
+          "text": "Utilisation appropriée des exceptions ou des valeurs d'erreur"
+        }
+      ],
+      "title": "Structure et style de code"
+    }
+  ]
 }

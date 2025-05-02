@@ -8,6 +8,8 @@ import re
 import json
 import glob
 
+from teach_assit.core.analysis.config_loader import ConfigLoader
+
 class DataManager:
     """Gestionnaire de données pour le module de feedback."""
     
@@ -23,21 +25,17 @@ class DataManager:
         self.load_exercise_configs()
     
     def load_exercise_configs(self):
-        """Charge les configurations des exercices depuis les fichiers JSON"""
-        configs_dir = os.path.join(os.getcwd(), 'configs')
-        if not os.path.exists(configs_dir):
-            return
-            
-        for filename in os.listdir(configs_dir):
-            if filename.endswith('.json'):
-                try:
-                    with open(os.path.join(configs_dir, filename), 'r', encoding='utf-8') as f:
-                        config = json.load(f)
-                        exercise_id = config.get('id')
-                        if exercise_id:
-                            self.exercise_configs[exercise_id] = config
-                except Exception as e:
-                    print(f"Erreur lors du chargement de la configuration {filename}: {str(e)}")
+        """Charge les configurations des exercices depuis la base de données"""
+        # Initialiser le chargeur de configuration avec le répertoire courant
+        config_loader = ConfigLoader(os.getcwd())
+        
+        # S'assurer que toutes les configurations sont chargées depuis la base de données
+        config_loader.load_all_configs()
+        
+        # Récupérer toutes les configurations d'exercices
+        self.exercise_configs = {}
+        for exercise_id, config in config_loader.get_all_exercise_configs().items():
+            self.exercise_configs[exercise_id] = config.to_dict()
     
     def get_students_from_results(self):
         """Récupère la liste des étudiants depuis l'onglet Results"""

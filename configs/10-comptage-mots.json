@@ -2,6 +2,32 @@
   "id": "10-comptage-mots",
   "name": "Comptage de Mots",
   "description": "Écrire une méthode qui compte le nombre de mots dans une chaîne de caractères. Les mots sont séparés par des espaces, des tabulations ou des retours à la ligne.",
+  "testInputs": [
+    {
+      "value": "Bonjour le monde",
+      "description": "Phrase simple (3 mots)"
+    },
+    {
+      "value": "Un\tdeux\ttrois\nquatre",
+      "description": "Séparateurs variés (4 mots)"
+    },
+    {
+      "value": "",
+      "description": "Chaîne vide (0 mot)"
+    },
+    {
+      "value": "   ",
+      "description": "Espaces uniquement (0 mot)"
+    },
+    {
+      "value": "Un    deux  trois",
+      "description": "Espaces multiples (3 mots)"
+    },
+    {
+      "value": "Bonjour-le-monde",
+      "description": "Mots avec tirets (1 mot)"
+    }
+  ],
   "rules": {
     "requiredMethods": [
       {
@@ -50,11 +76,87 @@
     ],
     "requiredDomainChecks": [
       {
-        "description": "Chaîne non nulle",
         "condition": "texte != null",
+        "description": "Chaîne non nulle",
         "errorMessage": "La chaîne ne peut pas être null."
       }
     ],
-    "mathFunctions": []
-  }
-} 
+    "mathFunctions": [],
+    "exceptionHandling": {
+      "requiredTryCatch": false,
+      "specificExceptions": []
+    }
+  },
+  "grading_criteria": [
+    {
+      "description": "Implémentation correcte de la méthode compterMots",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Signature correcte de la méthode (paramètre String, retour int)"
+        },
+        {
+          "text": "Utilisation appropriée de split() ou StringTokenizer"
+        },
+        {
+          "text": "Logique de comptage correcte"
+        }
+      ],
+      "title": "Implémentation de base"
+    },
+    {
+      "description": "Gestion des cas particuliers",
+      "points": 7,
+      "subcriteria": [
+        {
+          "text": "Gestion correcte des chaînes vides ou nulles"
+        },
+        {
+          "text": "Gestion correcte des espaces multiples"
+        },
+        {
+          "text": "Gestion correcte des différents séparateurs (espaces, tabulations, retours à la ligne)"
+        },
+        {
+          "text": "Nettoyage éventuel de la chaîne avec trim()"
+        }
+      ],
+      "title": "Gestion des cas particuliers"
+    },
+    {
+      "description": "Exactitude du résultat",
+      "points": 5,
+      "subcriteria": [
+        {
+          "text": "Résultat correct pour une phrase simple"
+        },
+        {
+          "text": "Résultat correct pour une chaîne vide"
+        },
+        {
+          "text": "Résultat correct avec des séparateurs variés"
+        },
+        {
+          "text": "Résultat correct avec des espaces multiples"
+        }
+      ],
+      "title": "Exactitude des résultats"
+    },
+    {
+      "description": "Qualité et organisation du code",
+      "points": 3,
+      "subcriteria": [
+        {
+          "text": "Code bien structuré et organisé"
+        },
+        {
+          "text": "Respect des conventions de nommage camelCase"
+        },
+        {
+          "text": "Utilisation appropriée des structures de contrôle"
+        }
+      ],
+      "title": "Structure et style de code"
+    }
+  ]
+}

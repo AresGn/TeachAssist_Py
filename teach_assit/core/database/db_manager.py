@@ -7,6 +7,7 @@ import os
 import sqlite3
 import datetime
 from pathlib import Path
+import json
 
 class DatabaseManager:
     """Gestionnaire de base de données SQLite pour l'application TeachAssist."""
@@ -70,6 +71,31 @@ class DatabaseManager:
             file_size INTEGER NOT NULL,
             file_type TEXT,
             FOREIGN KEY (folder_id) REFERENCES extracted_folders (id)
+        )
+        ''')
+        
+        # Table pour les configurations d'exercices
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS exercise_configs (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            difficulty INTEGER DEFAULT 1,
+            test_inputs TEXT,  -- Stockage JSON des entrées de test
+            rules TEXT,        -- Stockage JSON des règles
+            grading_criteria TEXT,  -- Stockage JSON des critères d'évaluation
+            last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        ''')
+        
+        # Table pour les configurations d'évaluations
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS assessment_configs (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            exercises TEXT,     -- Stockage JSON des exercices
+            total_max_points INTEGER DEFAULT 0,
+            last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         ''')
         
@@ -248,21 +274,19 @@ class DatabaseManager:
             for folder_id in folder_ids:
                 cursor.execute('DELETE FROM extracted_files WHERE folder_id = ?', (folder_id,))
             
-            # Supprime les dossiers
+            # Supprime les dossiers extraits
             cursor.execute('DELETE FROM extracted_folders WHERE zip_id = ?', (zip_id,))
             
             # Supprime le fichier ZIP
             cursor.execute('DELETE FROM zip_files WHERE id = ?', (zip_id,))
             
             conn.commit()
-            success = True
+            return True
         except sqlite3.Error:
             conn.rollback()
-            success = False
+            return False
         finally:
             conn.close()
-        
-        return success
     
     def update_extracted_folder_status(self, folder_id, status):
         """
@@ -270,7 +294,7 @@ class DatabaseManager:
         
         Args:
             folder_id (int): ID du dossier
-            status (str): Nouveau statut ('active', 'archived', 'deleted')
+            status (str): Nouveau statut ('active', 'archived', etc.)
             
         Returns:
             bool: True si la mise à jour a réussi
@@ -286,11 +310,312 @@ class DatabaseManager:
             ''', (status, folder_id))
             
             conn.commit()
-            success = True
+            return True
         except sqlite3.Error:
             conn.rollback()
-            success = False
+            return False
+        finally:
+            conn.close()
+            
+    # Méthodes pour gérer les configurations d'exercices
+    
+    def add_exercise_config(self, config_dict):
+        """
+        Ajoute ou met à jour une configuration d'exercice dans la base de données.
+        
+        Args:
+            config_dict (dict): Dictionnaire de configuration de l'exercice
+            
+        Returns:
+            bool: True si l'opération a réussi
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        exercise_id = config_dict.get('id')
+        if not exercise_id:
+            conn.close()
+            return False
+            
+        name = config_dict.get('name', '')
+        description = config_dict.get('description', '')
+        test_inputs = json.dumps(config_dict.get('testInputs', []))
+        rules = json.dumps(config_dict.get('rules', {}))
+        grading_criteria = json.dumps(config_dict.get('grading_criteria', []))
+        
+        try:
+            # Vérifier si l'exercice existe déjà
+            cursor.execute('SELECT id FROM exercise_configs WHERE id = ?', (exercise_id,))
+            existing = cursor.fetchone()
+            
+            if existing:
+                # Mise à jour
+                cursor.execute('''
+                UPDATE exercise_configs
+                SET name = ?, description = ?, 
+                    test_inputs = ?, rules = ?, grading_criteria = ?,
+                    last_modified = CURRENT_TIMESTAMP
+                WHERE id = ?
+                ''', (name, description, test_inputs, rules, grading_criteria, exercise_id))
+            else:
+                # Insertion
+                cursor.execute('''
+                INSERT INTO exercise_configs 
+                (id, name, description, test_inputs, rules, grading_criteria)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ''', (exercise_id, name, description, test_inputs, rules, grading_criteria))
+            
+            conn.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Erreur SQLite lors de l'ajout de l'exercice {exercise_id}: {e}")
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+            
+    def get_exercise_config(self, exercise_id):
+        """
+        Récupère une configuration d'exercice par son ID.
+        
+        Args:
+            exercise_id (str): ID de l'exercice
+            
+        Returns:
+            dict: Configuration de l'exercice, None si non trouvé
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('''
+            SELECT id, name, description, test_inputs, rules, grading_criteria
+            FROM exercise_configs
+            WHERE id = ?
+            ''', (exercise_id,))
+            
+            row = cursor.fetchone()
+            
+            if row:
+                return {
+                    'id': row[0],
+                    'name': row[1],
+                    'description': row[2],
+                    'testInputs': json.loads(row[3]),
+                    'rules': json.loads(row[4]),
+                    'grading_criteria': json.loads(row[5])
+                }
+            return None
+        except sqlite3.Error as e:
+            print(f"Erreur SQLite lors de la récupération de l'exercice {exercise_id}: {e}")
+            return None
+        finally:
+            conn.close()
+            
+    def get_all_exercise_configs(self):
+        """
+        Récupère toutes les configurations d'exercices.
+        
+        Returns:
+            dict: Dictionnaire de configurations {id: config_dict}
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('''
+            SELECT id, name, description, test_inputs, rules, grading_criteria
+            FROM exercise_configs
+            ORDER BY name
+            ''')
+            
+            result = {}
+            for row in cursor.fetchall():
+                config = {
+                    'id': row[0],
+                    'name': row[1],
+                    'description': row[2],
+                    'testInputs': json.loads(row[3]),
+                    'rules': json.loads(row[4]),
+                    'grading_criteria': json.loads(row[5])
+                }
+                result[row[0]] = config
+                
+            return result
+        except sqlite3.Error as e:
+            print(f"Erreur SQLite lors de la récupération des exercices: {e}")
+            return {}
+        finally:
+            conn.close()
+            
+    def delete_exercise_config(self, exercise_id):
+        """
+        Supprime une configuration d'exercice.
+        
+        Args:
+            exercise_id (str): ID de l'exercice à supprimer
+            
+        Returns:
+            bool: True si la suppression a réussi
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('DELETE FROM exercise_configs WHERE id = ?', (exercise_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            print(f"Erreur SQLite lors de la suppression de l'exercice {exercise_id}: {e}")
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+            
+    # Méthodes pour gérer les configurations d'évaluations
+    
+    def add_assessment_config(self, config_dict):
+        """
+        Ajoute ou met à jour une configuration d'évaluation dans la base de données.
+        
+        Args:
+            config_dict (dict): Dictionnaire de configuration de l'évaluation
+            
+        Returns:
+            bool: True si l'opération a réussi
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        assessment_id = config_dict.get('assessmentId')
+        if not assessment_id:
+            conn.close()
+            return False
+            
+        name = config_dict.get('name', '')
+        exercises = json.dumps(config_dict.get('exercises', []))
+        total_max_points = config_dict.get('totalMaxPoints', 0)
+        
+        try:
+            # Vérifier si l'évaluation existe déjà
+            cursor.execute('SELECT id FROM assessment_configs WHERE id = ?', (assessment_id,))
+            existing = cursor.fetchone()
+            
+            if existing:
+                # Mise à jour
+                cursor.execute('''
+                UPDATE assessment_configs
+                SET name = ?, exercises = ?, total_max_points = ?,
+                    last_modified = CURRENT_TIMESTAMP
+                WHERE id = ?
+                ''', (name, exercises, total_max_points, assessment_id))
+            else:
+                # Insertion
+                cursor.execute('''
+                INSERT INTO assessment_configs 
+                (id, name, exercises, total_max_points)
+                VALUES (?, ?, ?, ?)
+                ''', (assessment_id, name, exercises, total_max_points))
+            
+            conn.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Erreur SQLite lors de l'ajout de l'évaluation {assessment_id}: {e}")
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+            
+    def get_assessment_config(self, assessment_id):
+        """
+        Récupère une configuration d'évaluation par son ID.
+        
+        Args:
+            assessment_id (str): ID de l'évaluation
+            
+        Returns:
+            dict: Configuration de l'évaluation, None si non trouvée
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('''
+            SELECT id, name, exercises, total_max_points
+            FROM assessment_configs
+            WHERE id = ?
+            ''', (assessment_id,))
+            
+            row = cursor.fetchone()
+            
+            if row:
+                return {
+                    'assessmentId': row[0],
+                    'name': row[1],
+                    'exercises': json.loads(row[2]),
+                    'totalMaxPoints': row[3]
+                }
+            return None
+        except sqlite3.Error as e:
+            print(f"Erreur SQLite lors de la récupération de l'évaluation {assessment_id}: {e}")
+            return None
+        finally:
+            conn.close()
+            
+    def get_all_assessment_configs(self):
+        """
+        Récupère toutes les configurations d'évaluations.
+        
+        Returns:
+            dict: Dictionnaire de configurations {id: config_dict}
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('''
+            SELECT id, name, exercises, total_max_points
+            FROM assessment_configs
+            ORDER BY name
+            ''')
+            
+            result = {}
+            for row in cursor.fetchall():
+                config = {
+                    'assessmentId': row[0],
+                    'name': row[1],
+                    'exercises': json.loads(row[2]),
+                    'totalMaxPoints': row[3]
+                }
+                result[row[0]] = config
+                
+            return result
+        except sqlite3.Error as e:
+            print(f"Erreur SQLite lors de la récupération des évaluations: {e}")
+            return {}
         finally:
             conn.close()
         
-        return success 
+    def delete_assessment_config(self, assessment_id):
+        """
+        Supprime une configuration d'évaluation.
+        
+        Args:
+            assessment_id (str): ID de l'évaluation à supprimer
+            
+        Returns:
+            bool: True si la suppression a réussi
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('DELETE FROM assessment_configs WHERE id = ?', (assessment_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            print(f"Erreur SQLite lors de la suppression de l'évaluation {assessment_id}: {e}")
+            conn.rollback()
+            return False
+        finally:
+            conn.close() 
