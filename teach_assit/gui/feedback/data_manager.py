@@ -209,5 +209,72 @@ class DataManager:
     
     def get_execution_results_from_logs(self, student, exercise_id):
         """Tente de récupérer les résultats d'exécution depuis les fichiers logs"""
-        # Implémentation similaire à get_analysis_results_from_logs mais pour les résultats d'exécution
-        return "Résultats d'exécution non disponibles dans le système de logs" 
+        try:
+            # Chercher dans les fichiers logs récents pour les résultats
+            log_files = glob.glob(os.path.join(os.getcwd(), "logs", "*.log"))
+            if not log_files:
+                return "Pas de résultats d'exécution disponibles"
+                
+            # Trier par date de modification (le plus récent d'abord)
+            log_files.sort(key=os.path.getmtime, reverse=True)
+            
+            # Rechercher des informations sur cet exercice dans les logs récents
+            for log_file in log_files[:3]:  # Examiner seulement les 3 fichiers les plus récents
+                with open(log_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    
+                    # Rechercher des mentions de l'étudiant et de l'exercice
+                    pattern = rf"{re.escape(student)}.*?{re.escape(exercise_id)}.*?((Test réussi)|(Échec de test)|(Exécution terminée))"
+                    match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
+                    
+                    if match:
+                        # Extraire un fragment pertinent du log
+                        start = max(0, match.start() - 100)
+                        end = min(len(content), match.end() + 200)
+                        return content[start:end]
+            
+            return "Pas de résultats d'exécution disponibles"
+            
+        except Exception as e:
+            print(f"Erreur lors de la recherche des résultats d'exécution: {str(e)}")
+            return "Pas de résultats d'exécution disponibles"
+    
+    def get_exercise_status(self, student, exercise_id):
+        """
+        Récupère le statut d'un exercice pour un étudiant donné.
+        
+        Args:
+            student (str): Nom de l'étudiant
+            exercise_id (str): Identifiant de l'exercice
+            
+        Returns:
+            str: Statut de l'exercice
+        """
+        # Parcourir les exercices pour trouver celui correspondant à l'ID
+        exercises = self.get_exercises_for_student(student)
+        for exercise in exercises:
+            if exercise.get('id') == exercise_id:
+                return exercise.get('status', 'Statut inconnu')
+        
+        # Si on ne trouve pas l'exercice, essayer d'analyser les résultats pour déterminer un statut
+        _, analysis_results, execution_results = self.get_analysis_data(student, exercise_id)
+        
+        # Analyse des résultats pour déterminer un statut approprié
+        if analysis_results and "✅" in analysis_results:
+            success_count = analysis_results.count("✅")
+            fail_count = analysis_results.count("❌")
+            total_count = success_count + fail_count
+            
+            if total_count > 0:
+                percentage = (success_count / total_count) * 100
+                if percentage >= 90:
+                    return f"Excellent: {success_count}/{total_count} vérifications"
+                elif percentage >= 75:
+                    return f"Très bien: {success_count}/{total_count} vérifications"
+                elif percentage >= 50:
+                    return f"Moyen: {success_count}/{total_count} vérifications"
+                else:
+                    return f"À améliorer: {success_count}/{total_count} vérifications"
+        
+        # Si on n'a pas pu déterminer un statut à partir des résultats
+        return "Non évalué" 

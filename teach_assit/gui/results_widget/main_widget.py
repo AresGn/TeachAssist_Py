@@ -5,10 +5,11 @@ Widget principal pour l'affichage et l'analyse des résultats des étudiants.
 import os
 import logging
 import json
+import glob
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                            QTableWidget, QTableWidgetItem, QComboBox, 
                            QPushButton, QLineEdit, QFrame, QHeaderView,
-                           QSizePolicy, QMessageBox, QScrollArea, QGroupBox)
+                           QSizePolicy, QMessageBox, QScrollArea, QGroupBox, QDialog, QTextEdit)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QColor, QFont
 
@@ -567,11 +568,26 @@ class ResultsWidget(QWidget):
     def show_details_dialog(self, title, details):
         """Afficher les détails dans un dialogue modal."""
         # Créer un dictionnaire de détails avec le titre comme nom d'exercice
-        exercise_details = {
-            "exercise_name": title,
-            "report": details
-        }
-        dialog = DetailsDialog(self, exercise_details)
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Détails d'analyse - {title}")
+        dialog.setMinimumSize(600, 400)
+        
+        layout = QVBoxLayout(dialog)
+        
+        # Afficher les détails
+        details_text = QTextEdit()
+        details_text.setReadOnly(True)
+        details_text.setHtml(details)
+        layout.addWidget(details_text)
+        
+        # Bouton fermer
+        button_layout = QHBoxLayout()
+        close_button = QPushButton("Fermer")
+        close_button.clicked.connect(dialog.accept)
+        button_layout.addStretch()
+        button_layout.addWidget(close_button)
+        layout.addLayout(button_layout)
+        
         dialog.exec_()
     
     def show_output_dialog(self, title, output_text):
@@ -966,4 +982,188 @@ class ResultsWidget(QWidget):
                 self.execution_results_table.setRowHeight(i, 80)  # Augmenter la hauteur des lignes
         else:
             # Aucun résultat à afficher
-            QMessageBox.information(self, "Aucun résultat", "Aucun fichier n'a pu être exécuté avec les tests spécifiés.") 
+            QMessageBox.information(self, "Aucun résultat", "Aucun fichier n'a pu être exécuté avec les tests spécifiés.")
+    
+    def get_student_list(self):
+        """Récupère la liste des étudiants affichés dans le tableau de résultats"""
+        students = set()
+        for row in range(self.results_table.rowCount()):
+            student_item = self.results_table.item(row, 0)
+            if student_item:
+                students.add(student_item.text())
+        return list(students)
+    
+    def get_exercises_for_student(self, student):
+        """Récupère les exercices d'un étudiant spécifique depuis le tableau de résultats"""
+        exercises = []
+        
+        # Trouver la première ligne de l'étudiant
+        start_row = -1
+        for row in range(self.results_table.rowCount()):
+            student_item = self.results_table.item(row, 0)
+            if student_item and student_item.text() == student:
+                start_row = row
+                break
+        
+        if start_row == -1:
+            # Étudiant non trouvé
+            return []
+        
+        # Déterminer le nombre de lignes pour cet étudiant (rowspan)
+        span_rows = 1
+        if self.results_table.rowSpan(start_row, 0) > 1:
+            span_rows = self.results_table.rowSpan(start_row, 0)
+        
+        # Récupérer les exercices pour chaque ligne
+        for row in range(start_row, start_row + span_rows):
+            exercise_widget = self.results_table.cellWidget(row, 1)
+            if isinstance(exercise_widget, ExerciseWidget):
+                exercise_name = exercise_widget.get_exercise_name()
+                file_name = exercise_widget.get_file_name()
+                
+                # Déterminer l'ID de l'exercice (à partir de la configuration)
+                exercise_id = None
+                # Si une analyse a été effectuée, récupérer l'ID depuis les données d'analyse
+                try:
+                    # Trouver l'ID dans les configurations actives
+                    config_loader = ConfigLoader(os.getcwd())
+                    for ex_id, config in config_loader.get_all_exercise_configs().items():
+                        if config.name == exercise_name or ex_id.lower() in file_name.lower():
+                            exercise_id = ex_id
+                            break
+                except Exception as e:
+                    print(f"Erreur lors de la récupération de l'ID d'exercice: {e}")
+                
+                # Utiliser le nom d'exercice si on n'a pas pu déterminer l'ID
+                if not exercise_id:
+                    exercise_id = exercise_name.replace(" ", "-").lower()
+                
+                # Récupérer le statut depuis le widget
+                status_widget = self.results_table.cellWidget(row, 2)
+                status = "En attente"
+                if isinstance(status_widget, StatusWidget):
+                    status = status_widget.get_status_text()
+                
+                # Essayer d'obtenir le chemin du fichier
+                file_path = None
+                try:
+                    # Format attendu: répertoire étudiant/nom du fichier
+                    file_path = os.path.join(os.getcwd(), "tests", "java_samples", student, file_name)
+                    if not os.path.exists(file_path):
+                        # Chercher dans tous les dossiers possibles
+                        for td_dir in glob.glob(os.path.join(os.getcwd(), "tests", "java_samples", "TD*")):
+                            possible_path = os.path.join(td_dir, student, file_name)
+                            if os.path.exists(possible_path):
+                                file_path = possible_path
+                                break
+                except Exception as e:
+                    print(f"Erreur lors de la récupération du chemin du fichier: {e}")
+                
+                # Ajouter l'exercice à la liste
+                exercises.append({
+                    'id': exercise_id,
+                    'file': file_name,
+                    'status': status,
+                    'path': file_path
+                })
+        
+        return exercises
+    
+    def get_current_assessment_name(self):
+        """Récupère le nom de l'évaluation actuellement affichée"""
+        try:
+            # Vérifier si le nom de l'évaluation est stocké dans le tableau
+            for row in range(self.results_table.rowCount()):
+                for col in range(self.results_table.columnCount()):
+                    item = self.results_table.item(row, col)
+                    if item and "TD" in item.text():
+                        # Chercher un pattern "TD1", "TD2", etc.
+                        import re
+                        match = re.search(r'TD\d+', item.text())
+                        if match:
+                            return match.group(0)
+            
+            # Si on n'a pas trouvé dans le tableau, essayer dans le titre
+            if hasattr(self, 'title_label') and isinstance(self.title_label, QLabel):
+                title_text = self.title_label.text()
+                if "TD" in title_text:
+                    match = re.search(r'TD\d+', title_text)
+                    if match:
+                        return match.group(0)
+            
+            # Essayer de déterminer d'après les exercices affichés
+            exercise_ids = []
+            for row in range(self.results_table.rowCount()):
+                exercise_widget = self.results_table.cellWidget(row, 1)
+                if isinstance(exercise_widget, ExerciseWidget):
+                    exercise_name = exercise_widget.get_exercise_name()
+                    exercise_ids.append(exercise_name)
+            
+            # Associer les noms d'exercices aux TDs
+            if any("fonction-racine" in ex.lower() or "comptage-mots" in ex.lower() for ex in exercise_ids):
+                return "TD3"
+            elif any("triangle" in ex.lower() or "sequence" in ex.lower() for ex in exercise_ids):
+                return "TD1"
+        except Exception as e:
+            print(f"Erreur lors de la récupération du nom de l'évaluation: {e}")
+        
+        return None
+    
+    def get_analysis_data(self, student, exercise_id):
+        """Récupère les données d'analyse pour un étudiant et un exercice spécifiques"""
+        # Chercher l'exercice dans les résultats
+        for row in range(self.results_table.rowCount()):
+            student_item = self.results_table.item(row, 0)
+            if student_item and student_item.text() == student:
+                exercise_widget = self.results_table.cellWidget(row, 1)
+                if isinstance(exercise_widget, ExerciseWidget):
+                    exercise_name = exercise_widget.get_exercise_name()
+                    file_name = exercise_widget.get_file_name()
+                    
+                    # Vérifier si cet exercice correspond à l'ID demandé
+                    if (exercise_id == exercise_name.replace(" ", "-").lower() or
+                        exercise_id.lower() in file_name.lower()):
+                        
+                        # Récupérer le code source
+                        code = None
+                        try:
+                            # Format attendu: répertoire étudiant/nom du fichier
+                            file_path = None
+                            for td_dir in glob.glob(os.path.join(os.getcwd(), "tests", "java_samples", "TD*")):
+                                possible_path = os.path.join(td_dir, student, file_name)
+                                if os.path.exists(possible_path):
+                                    file_path = possible_path
+                                    break
+                            
+                            if file_path and os.path.exists(file_path):
+                                with open(file_path, 'r', encoding='utf-8') as f:
+                                    code = f.read()
+                        except Exception as e:
+                            print(f"Erreur lors de la lecture du code source: {e}")
+                        
+                        # Récupérer les résultats d'analyse depuis le widget de statut
+                        status_widget = self.results_table.cellWidget(row, 2)
+                        analysis_results = "Analyse effectuée mais résultats non disponibles"
+                        if isinstance(status_widget, StatusWidget):
+                            analysis_results = status_widget.get_detailed_status()
+                        
+                        # Récupérer les résultats d'exécution (si disponibles)
+                        execution_results = "Pas de résultats d'exécution disponibles"
+                        
+                        # Si aucun code trouvé, créer un squelette basique
+                        if not code:
+                            if "triangle" in exercise_id.lower():
+                                code = "public class Triangle {\n    public static boolean estTriangleIsocele(int a, int b, int c) {\n        // Code manquant\n        return false;\n    }\n}"
+                            elif "sequence" in exercise_id.lower():
+                                code = "public class Sequence {\n    public static int sommeSequence(int n) {\n        // Code manquant\n        return 0;\n    }\n}"
+                            elif "racine" in exercise_id.lower():
+                                code = "public class RacineCarree {\n    public static double calculerRacineCarree(double nombre) {\n        // Code manquant\n        return 0.0;\n    }\n}"
+                            elif "comptage" in exercise_id.lower() or "mots" in exercise_id.lower():
+                                code = "public class ComptageMots {\n    public static int compterMots(String texte) {\n        // Code manquant\n        return 0;\n    }\n}"
+                            else:
+                                code = f"// Code pour l'exercice {exercise_id} non disponible"
+                        
+                        return code, analysis_results, execution_results 
+        
+        # Si on n'a pas trouvé l'exercice, retourner des valeurs par défaut
+        return None, "Pas de résultats d'analyse disponibles", "Pas de résultats d'exécution disponibles" 

@@ -22,6 +22,7 @@ class StatusWidget(QWidget):
             statuses: Liste des statuts à afficher
         """
         super().__init__(parent)
+        self.statuses = statuses or []
         self.setStyleSheet(row_style)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
@@ -62,6 +63,33 @@ class StatusWidget(QWidget):
         grid_layout.addWidget(left_column)
         grid_layout.addWidget(right_column)
         layout.addWidget(status_grid)
+    
+    def get_status_text(self):
+        """Retourne un résumé textuel des statuts"""
+        if not self.statuses:
+            return "Non évalué"
+            
+        total = len(self.statuses)
+        passed = sum(1 for status in self.statuses if status.get("ok", False))
+        
+        if passed == total:
+            return "Réussi"
+        elif passed == 0:
+            return "Échoué"
+        else:
+            return f"Partiel ({passed}/{total})"
+    
+    def get_detailed_status(self):
+        """Retourne un résumé détaillé des statuts au format texte"""
+        if not self.statuses:
+            return "Pas de résultats d'analyse disponibles"
+            
+        result = []
+        for status in self.statuses:
+            icon = SYMBOL_OK if status.get("ok", False) else SYMBOL_WARNING if status.get("warning", False) else SYMBOL_FAIL
+            result.append(f"{icon} {status.get('name', 'Vérification')}")
+        
+        return "\n".join(result)
 
 
 class ExerciseWidget(QWidget):
