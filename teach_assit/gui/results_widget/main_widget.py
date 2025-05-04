@@ -6,6 +6,7 @@ import os
 import logging
 import json
 import glob
+import re
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                            QTableWidget, QTableWidgetItem, QComboBox, 
                            QPushButton, QLineEdit, QFrame, QHeaderView,
@@ -620,81 +621,46 @@ class ResultsWidget(QWidget):
             if student_item:
                 students.add(student_item.text())
         
-        # Liste pour stocker les IDs d'exercices
+        # Déterminer l'évaluation courante
+        current_assessment = self.get_current_assessment_name()
+        print(f"Évaluation courante identifiée: {current_assessment}")
+        
+        # Liste pour stocker les IDs d'exercices pertinents pour cette évaluation
         exercise_ids = set()
         
-        # Récupérer l'assessment courant depuis le tableau
-        current_assessment = None
-        for row in range(self.results_table.rowCount()):
-            for col in range(self.results_table.columnCount()):
-                item = self.results_table.item(row, col)
-                if item and "TD" in item.text():
-                    # Chercher un pattern "TD1", "TD2", etc.
-                    import re
-                    match = re.search(r'TD\d+', item.text())
-                    if match:
-                        current_assessment = match.group(0)
-                        break
-        
-        # Si nous n'avons pas déterminé l'assessment, utiliser la méthode d'origine
-        if not current_assessment:
-            # MÉTHODE 1: Récupérer les exercices depuis les widgets du tableau
-            for row in range(self.results_table.rowCount()):
-                exercise_widget = self.results_table.cellWidget(row, 1)
-                if exercise_widget and isinstance(exercise_widget, ExerciseWidget):
-                    exercise_name = exercise_widget.get_exercise_name()
-                    
-                    # Chercher l'ID correspondant au nom de l'exercice
-                    for ex_id, config in exercise_configs.items():
-                        if config.name == exercise_name:
-                            exercise_ids.add(ex_id)
-                            break
-        else:
-            # Si nous avons un assessment, récupérer sa configuration
-            print(f"Assessment identifié : {current_assessment}")
+        # Si nous avons identifié l'évaluation courante, obtenir sa configuration
+        if current_assessment:
             assessment_config = config_loader.get_assessment_config(current_assessment)
             
             if assessment_config:
-                # Utiliser tous les exercices de cette évaluation
+                # Utiliser les exercices spécifiés dans la configuration de l'évaluation
                 for ex in assessment_config.exercises:
                     ex_id = ex.get('exerciseId', '')
                     if ex_id:
                         print(f"Ajout de l'exercice {ex_id} depuis la configuration de {current_assessment}")
                         exercise_ids.add(ex_id)
         
-        # Si nous n'avons pas encore d'exercices, essayer les méthodes alternatives
+        # Si nous n'avons pas obtenu d'exercices depuis la configuration d'évaluation,
+        # utiliser les exercices affichés dans le tableau des résultats
         if not exercise_ids:
-            # MÉTHODE 2: Analyser les exercices affichés dans le tableau
-            current_exercises = set()
             for row in range(self.results_table.rowCount()):
-                # Récupérer le widget personnalisé
                 exercise_widget = self.results_table.cellWidget(row, 1)
-                if exercise_widget and isinstance(exercise_widget, ExerciseWidget):
-                    current_exercises.add(exercise_widget.get_exercise_name())
-                
-            # Pour chaque nom d'exercice, chercher l'ID correspondant
-            for exercise_name in current_exercises:
-                for ex_id, config in exercise_configs.items():
-                    if config.name == exercise_name:
-                        exercise_ids.add(ex_id)
+                if isinstance(exercise_widget, ExerciseWidget):
+                    exercise_name = exercise_widget.get_exercise_name()
+                    
+                    # Chercher l'ID correspondant au nom d'exercice
+                    for ex_id, config in exercise_configs.items():
+                        if config.name == exercise_name:
+                            exercise_ids.add(ex_id)
+                            break
         
-        # Pour TD3 spécifiquement, on vérifie manuellement les exercices spécifiques
-        if current_assessment == "TD3" and not exercise_ids:
-            td3_exercises = ['09-fonction-racine-carree', '10-comptage-mots']
-            for ex_id in td3_exercises:
-                print(f"Vérification manuelle de l'exercice TD3: {ex_id}")
-                # Vérifier si l'exercice existe dans notre configuration
-                if ex_id in exercise_configs:
-                    exercise_ids.add(ex_id)
-                    print(f"Exercice {ex_id} ajouté depuis la liste manuelle")
+        # Log des exercices identifiés
+        print(f"Exercices identifiés pour l'exécution: {exercise_ids}")
         
-        # Log pour le débogage
-        print(f"Exercices identifiés à exécuter: {exercise_ids}")
-        
-        # Charger les configurations directement depuis les fichiers JSON si nécessaires
+        # Vérifier si les configurations des exercices identifiés sont disponibles
         missing_configs = [ex_id for ex_id in exercise_ids if ex_id not in exercise_configs]
         if missing_configs:
-            print(f"Certains exercices n'ont pas été trouvés dans la base: {missing_configs}")
+            print(f"Configurations manquantes pour certains exercices: {missing_configs}")
             for ex_id in missing_configs:
                 config_path = f"configs/{ex_id}.json"
                 if os.path.exists(config_path):
@@ -710,123 +676,53 @@ class ResultsWidget(QWidget):
         # Filtrer les configurations pour ne garder que les exercices identifiés
         exercises_to_process = {ex_id: exercise_configs[ex_id] for ex_id in exercise_ids if ex_id in exercise_configs}
         
-        # Vérification de sécurité avant de poursuivre
         if not exercises_to_process:
             QMessageBox.warning(self, "Aucun exercice", "Aucun exercice correspondant n'a été trouvé dans les configurations.")
             self.execute_button.setEnabled(True)
             self.execute_button.setText("Exécuter les codes")
             return
         
-        # Log des exercices qui seront traités
         print(f"Exercices à traiter: {list(exercises_to_process.keys())}")
         
         try:
-            # Pour chaque étudiant, exécuter uniquement les exercices identifiés
+            # Pour chaque étudiant, exécuter les exercices identifiés
             for student_name in students:
                 print(f"Traitement des exercices pour l'étudiant: {student_name}")
                 
-                # Parcourir uniquement les exercices identifiés
+                # Parcourir les exercices à traiter
                 for ex_id, config in exercises_to_process.items():
-                    # Déterminer les fichiers possibles pour cet exercice
-                    # On adapte les noms de fichiers en fonction de l'ID de l'exercice
-                    base_name = ex_id.split('-', 1)[1] if '-' in ex_id else ex_id
+                    # Récupérer les entrées de test pour cet exercice
+                    test_inputs = self._get_test_inputs_for_exercise(config, ex_id)
                     
-                    potential_files = [
-                        f"{ex_id}.java",  # Format ID complet
-                        f"{base_name}.java",  # Format nom de base
-                        f"{base_name}1.java",
-                        f"{base_name}2.java",
-                        f"{base_name}3.java",
-                        f"{base_name}-while.java",
-                        f"{base_name}-do-while.java",
-                        f"{base_name}-for.java",
-                        f"{base_name}-erreur.java"
-                    ]
+                    # Générer différents noms de fichiers possibles pour cet exercice
+                    potential_file_names = self._generate_potential_file_names(ex_id)
                     
-                    # Format spécifique pour certains exercices
-                    if "fonction-racine" in ex_id:
-                        potential_files.extend([
-                            "fonction-racine-carree.java",
-                            "racineCarre.java",
-                            "RacineCarree.java",
-                            "racine-carree.java",
-                            "Racine.java"
-                        ])
-                    elif "comptage-mots" in ex_id:
-                        potential_files.extend([
-                            "ComptageMots.java",
-                            "comptage-mots.java",
-                            "CompteMots.java",
-                            "Comptage.java",
-                            "Mots.java"
-                        ])
-                    
-                    # Récupérer les entrées de test de la configuration
-                    test_inputs = []
-                    
-                    # Méthode 1: Utiliser la méthode get_test_inputs si disponible
-                    if hasattr(config, 'get_test_inputs') and callable(getattr(config, 'get_test_inputs')):
-                        raw_inputs = config.get_test_inputs()
-                        # Si les résultats sont des dictionnaires, extraire la valeur
-                        if raw_inputs and isinstance(raw_inputs[0], dict):
-                            test_inputs = [item.get("value", "") for item in raw_inputs]
-                        else:
-                            test_inputs = raw_inputs
-                        
-                        print(f"Test inputs trouvés pour {ex_id} via get_test_inputs: {test_inputs}")
-                    
-                    # Méthode 2: Accéder directement à l'attribut test_inputs
-                    if not test_inputs and hasattr(config, 'test_inputs'):
-                        raw_inputs = config.test_inputs
-                        # Si les résultats sont des dictionnaires, extraire la valeur
-                        if raw_inputs and isinstance(raw_inputs[0], dict):
-                            test_inputs = [item.get("value", "") for item in raw_inputs]
-                        else:
-                            test_inputs = raw_inputs
-                        
-                        print(f"Test inputs trouvés pour {ex_id} via attribut test_inputs: {test_inputs}")
-                    
-                    # Si aucune entrée n'est configurée, utiliser des entrées par défaut
-                    if not test_inputs:
-                        # Entrées par défaut selon le type d'exercice
-                        if "racine" in base_name.lower() or "fonction-racine" in ex_id:
-                            test_inputs = ["4", "9", "16", "-4", "0"]
-                            print(f"Utilisation d'entrées par défaut pour racine carrée: {test_inputs}")
-                        elif "triangle" in base_name.lower():
-                            test_inputs = ["3", "5", "10"]
-                            print(f"Utilisation d'entrées par défaut pour triangle: {test_inputs}")
-                        elif "comptage" in base_name.lower() or "mots" in base_name.lower():
-                            test_inputs = ["Ceci est un test", "Un deux trois quatre", ""]
-                            print(f"Utilisation d'entrées par défaut pour comptage mots: {test_inputs}")
-                        else:
-                            # Par défaut, utiliser une entrée vide
-                            test_inputs = [""]
-                            print(f"Aucune entrée spécifique pour {ex_id}, utilisation de l'entrée vide")
-                    
-                    # S'assurer que nous avons au moins une entrée
-                    if not test_inputs:
-                        test_inputs = [""]
-                    
-                    # Chercher le fichier correspondant
+                    # Chercher le fichier correspondant avec une logique améliorée
                     file_found = False
-                    for file_name in potential_files:
+                    
+                    # Recherche par nom de fichier
+                    for file_name in potential_file_names:
                         file_path = self.code_executor.find_file_path(student_name, file_name)
                         if file_path:
                             print(f"Fichier pour {ex_id} trouvé: {file_path}")
                             file_found = True
                             
-                            # Exécuter avec les entrées de test configurées
+                            # Exécuter le code avec les entrées de test
                             test_results = self.code_executor.execute_code(file_path, test_inputs)
                             
-                            # Ajouter les résultats
+                            # Ajouter les résultats à la liste
                             for i, result in enumerate(test_results):
                                 input_val = test_inputs[i] if i < len(test_inputs) else ""
                                 
+                                # Récupérer la description du test si disponible
                                 input_description = ""
                                 if hasattr(config, 'get_test_inputs') and config.get_test_inputs() and i < len(config.get_test_inputs()):
                                     test_config = config.get_test_inputs()[i]
                                     if isinstance(test_config, dict):
                                         input_description = test_config.get("description", "")
+                                
+                                # Créer un identifiant unique pour cette exécution
+                                execution_id = f"{ex_id}_{i}"
                                 
                                 all_results.append({
                                     "student": student_name,
@@ -838,14 +734,51 @@ class ResultsWidget(QWidget):
                                     "success": result["success"],
                                     "compilation_error": result.get("compilation_error", False),
                                     "stdout": result.get("stdout", ""),
-                                    "stderr": result.get("stderr", "")
+                                    "stderr": result.get("stderr", ""),
+                                    "execution_id": execution_id  # Identifiant unique pour cette exécution
                                 })
                             
-                            # Si on a trouvé un fichier, on passe à l'exercice suivant
+                            # Passer à l'exercice suivant
                             break
                     
+                    # Si le fichier n'a pas été trouvé, essayer une recherche par mots-clés
                     if not file_found:
-                        print(f"Aucun fichier trouvé pour l'exercice {ex_id} et l'étudiant {student_name}")
+                        file_path = self._find_file_by_keywords(student_name, ex_id, current_assessment)
+                        if file_path:
+                            print(f"Fichier pour {ex_id} trouvé par recherche de mots-clés: {file_path}")
+                            
+                            # Exécuter le code avec les entrées de test
+                            test_results = self.code_executor.execute_code(file_path, test_inputs)
+                            
+                            # Ajouter les résultats à la liste
+                            for i, result in enumerate(test_results):
+                                input_val = test_inputs[i] if i < len(test_inputs) else ""
+                                
+                                # Récupérer la description du test si disponible
+                                input_description = ""
+                                if hasattr(config, 'get_test_inputs') and config.get_test_inputs() and i < len(config.get_test_inputs()):
+                                    test_config = config.get_test_inputs()[i]
+                                    if isinstance(test_config, dict):
+                                        input_description = test_config.get("description", "")
+                                
+                                # Créer un identifiant unique pour cette exécution
+                                execution_id = f"{ex_id}_{i}"
+                                
+                                all_results.append({
+                                    "student": student_name,
+                                    "exercise": config.name,
+                                    "exercise_id": ex_id,
+                                    "file_path": file_path,
+                                    "input": input_val,
+                                    "input_description": input_description,
+                                    "success": result["success"],
+                                    "compilation_error": result.get("compilation_error", False),
+                                    "stdout": result.get("stdout", ""),
+                                    "stderr": result.get("stderr", ""),
+                                    "execution_id": execution_id  # Identifiant unique pour cette exécution
+                                })
+                        else:
+                            print(f"Aucun fichier trouvé pour l'exercice {ex_id} et l'étudiant {student_name}")
             
             # Vérifier si nous avons des résultats à afficher
             if not all_results:
@@ -871,6 +804,207 @@ class ResultsWidget(QWidget):
         self.execute_button.setEnabled(True)
         self.execute_button.setText("Exécuter les codes")
     
+    def _get_test_inputs_for_exercise(self, config, ex_id):
+        """Récupère les entrées de test pour un exercice donné depuis la configuration."""
+        test_inputs = []
+        
+        # Méthode 1: Utiliser la méthode get_test_inputs si disponible
+        if hasattr(config, 'get_test_inputs') and callable(getattr(config, 'get_test_inputs')):
+            raw_inputs = config.get_test_inputs()
+            if raw_inputs:
+                # Si les résultats sont des dictionnaires, extraire la valeur
+                if isinstance(raw_inputs[0], dict):
+                    test_inputs = [item.get("value", "") for item in raw_inputs]
+                else:
+                    test_inputs = raw_inputs
+                
+                print(f"Test inputs trouvés pour {ex_id} via get_test_inputs: {test_inputs}")
+                return test_inputs
+        
+        # Méthode 2: Accéder directement à l'attribut test_inputs
+        if hasattr(config, 'test_inputs'):
+            raw_inputs = config.test_inputs
+            if raw_inputs:
+                # Si les résultats sont des dictionnaires, extraire la valeur
+                if isinstance(raw_inputs[0], dict):
+                    test_inputs = [item.get("value", "") for item in raw_inputs]
+                else:
+                    test_inputs = raw_inputs
+                
+                print(f"Test inputs trouvés pour {ex_id} via attribut test_inputs: {test_inputs}")
+                return test_inputs
+        
+        # Méthode 3: Chercher dans la configuration complète de l'exercice
+        if hasattr(config, 'to_dict'):
+            config_dict = config.to_dict()
+            if 'testInputs' in config_dict:
+                raw_inputs = config_dict['testInputs']
+                if raw_inputs:
+                    # Extraire les valeurs selon le format
+                    if isinstance(raw_inputs[0], dict):
+                        test_inputs = [item.get("value", "") for item in raw_inputs]
+                    else:
+                        test_inputs = raw_inputs
+                    
+                    print(f"Test inputs trouvés dans le dictionnaire de config pour {ex_id}: {test_inputs}")
+                    return test_inputs
+        
+        # Entrées par défaut basées sur le type d'exercice
+        # Les entrées spécifiques sont déterminées à partir de l'ID ou du nom de l'exercice
+        ex_name = ex_id.lower()
+        
+        # Définir des entrées appropriées selon le type d'exercice
+        if any(keyword in ex_name for keyword in ["racine", "carre", "sqrt"]):
+            # Exercice de racine carrée
+            return ["4", "25", "0", "-4"]
+        elif any(keyword in ex_name for keyword in ["triangle", "isocele"]):
+            # Exercice de triangle isocèle
+            return ["3 4 5", "5 5 8", "2 2 2"]
+        elif any(keyword in ex_name for keyword in ["mot", "comptage", "count", "word"]):
+            # Exercice de comptage de mots
+            return ["Bonjour le monde", "Un       deux     trois\nquatre", "", "   "]
+        elif any(keyword in ex_name for keyword in ["palindrome"]):
+            # Exercice de palindrome
+            return ["radar", "Engage le jeu que je le gagne", "test"]
+        elif any(keyword in ex_name for keyword in ["factoriel", "factorial"]):
+            # Exercice de factorielle
+            return ["5", "0", "10"]
+        elif any(keyword in ex_name for keyword in ["fibo", "fibonacci"]):
+            # Exercice de Fibonacci
+            return ["10", "1", "15"]
+        elif any(keyword in ex_name for keyword in ["pgcd", "gcd"]):
+            # Exercice de PGCD
+            return ["12 8", "17 13", "0 5"]
+        elif any(keyword in ex_name for keyword in ["premier", "prime"]):
+            # Exercice de nombre premier
+            return ["7", "4", "0", "1", "2"]
+        
+        # Par défaut, utiliser une entrée vide
+        print(f"Aucune entrée spécifique trouvée pour {ex_id}, utilisation de l'entrée vide")
+        return [""]
+    
+    def _generate_potential_file_names(self, ex_id):
+        """Génère une liste de noms de fichiers potentiels pour un exercice."""
+        base_name = ex_id.split('-', 1)[1] if '-' in ex_id else ex_id
+        
+        # Liste de base des noms de fichiers potentiels
+        potential_files = [
+            f"{ex_id}.java",  # Format ID complet
+            f"{base_name}.java",  # Format nom de base
+            f"{base_name}1.java",
+            f"{base_name}2.java",
+            f"{base_name}3.java",
+            f"{base_name}_solution.java",
+            f"{base_name}-solution.java"
+        ]
+        
+        # Capitaliser la première lettre pour les conventions Java
+        capitalized = base_name[0].upper() + base_name[1:] if base_name else ""
+        if capitalized:
+            potential_files.append(f"{capitalized}.java")
+        
+        # Transformations spécifiques selon le type d'exercice
+        ex_name = ex_id.lower()
+        
+        # Racine carrée
+        if "racine" in ex_name or "carre" in ex_name:
+            potential_files.extend([
+                "RacineCarree.java",
+                "Racine.java",
+                "racine.java",
+                "racineCarre.java",
+                "racine-carree.java",
+                "FonctionRacine.java",
+                "fonction-racine-carree.java"
+            ])
+        
+        # Comptage de mots
+        elif "mot" in ex_name or "comptage" in ex_name:
+            potential_files.extend([
+                "ComptageMots.java",
+                "CompteMots.java",
+                "Comptage.java",
+                "comptage-mots.java",
+                "Mots.java",
+                "comptage.java",
+                "CompterMots.java"
+            ])
+        
+        # Triangle
+        elif "triangle" in ex_name:
+            potential_files.extend([
+                "Triangle.java",
+                "TriangleIsocele.java",
+                "triangle-isocele.java"
+            ])
+        
+        # Séquence numérique
+        elif "sequence" in ex_name:
+            potential_files.extend([
+                "Sequence.java",
+                "SequenceNumerique.java",
+                "sequence-numerique.java"
+            ])
+        
+        # Palindrome
+        elif "palindrome" in ex_name:
+            potential_files.extend([
+                "Palindrome.java",
+                "TestPalindrome.java",
+                "palindrome.java"
+            ])
+        
+        return potential_files
+    
+    def _find_file_by_keywords(self, student_name, ex_id, current_assessment=None):
+        """Recherche un fichier par mots-clés dans les dossiers de l'étudiant."""
+        # Déterminer les mots-clés à rechercher selon le type d'exercice
+        keywords = []
+        ex_name = ex_id.lower()
+        
+        if "racine" in ex_name or "carre" in ex_name:
+            keywords = ["racine", "carre", "fonction"]
+        elif "mot" in ex_name or "comptage" in ex_name:
+            keywords = ["mot", "comptage", "compteur", "mots"]
+        elif "triangle" in ex_name:
+            keywords = ["triangle", "isocele"]
+        elif "sequence" in ex_name:
+            keywords = ["sequence", "numerique"]
+        elif "palindrome" in ex_name:
+            keywords = ["palindrome"]
+        else:
+            # Si aucun mot-clé spécifique, utiliser des parties de l'ID
+            parts = ex_id.split('-')
+            keywords = [p for p in parts if len(p) > 2]  # Ignorer les parties trop courtes
+        
+        # Ajouter l'extension Java comme mot-clé
+        keywords.append("java")
+        
+        print(f"Recherche par mots-clés pour {ex_id}: {keywords}")
+        
+        # Rechercher dans les dossiers des évaluations
+        for td_dir in glob.glob(os.path.join(os.getcwd(), "tests", "java_samples", current_assessment or "TD*")):
+            student_dir = os.path.join(td_dir, student_name)
+            if os.path.exists(student_dir):
+                # Chercher tous les fichiers Java
+                java_files = glob.glob(os.path.join(student_dir, "*.java"))
+                for file_path in java_files:
+                    file_name = os.path.basename(file_path).lower()
+                    # Vérifier si un des mots-clés est présent dans le nom du fichier
+                    if any(keyword.lower() in file_name for keyword in keywords):
+                        return file_path
+        
+        # Chercher directement dans le dossier de l'étudiant
+        student_dir = os.path.join(os.getcwd(), "tests", "java_samples", student_name)
+        if os.path.exists(student_dir):
+            java_files = glob.glob(os.path.join(student_dir, "*.java"))
+            for file_path in java_files:
+                file_name = os.path.basename(file_path).lower()
+                if any(keyword.lower() in file_name for keyword in keywords):
+                    return file_path
+        
+        return None
+    
     def _display_execution_results(self, results):
         """Afficher les résultats d'exécution dans le tableau."""
         # Effacer le tableau des résultats d'exécution
@@ -880,16 +1014,35 @@ class ResultsWidget(QWidget):
         logging.info(f"Affichage de {len(results)} résultats d'exécution")
         types_exercices = set()
         for result in results:
-            types_exercices.add(result.get("exercise", ""))
+            exercise_type = result.get("exercise_type", "")
+            if exercise_type:
+                types_exercices.add(exercise_type)
+            else:
+                types_exercices.add(f"{result.get('exercise', '')} ({result.get('exercise_id', '')})")
         logging.info(f"Types d'exercices dans les résultats: {types_exercices}")
         
-        # Filtrer pour n'avoir qu'un seul résultat par étudiant et type d'exercice
-        # (pour les exercices qui ont plusieurs entrées comme triangle-isocele)
+        # Vérifier si l'identifiant unique d'exécution est présent
+        has_execution_id = any("execution_id" in result for result in results)
+        has_exercise_type = any("exercise_type" in result for result in results)
+        
+        # Regrouper les résultats par exécution spécifique pour éviter les mélanges entre exercices
         grouped_results = {}
         for result in results:
             student = result.get("student", "")
-            exercise = result.get("exercise", "")
-            key = f"{student}_{exercise}"
+            exercise_id = result.get("exercise_id", "")
+            test_input = result.get("input", "")
+            exercise_type = result.get("exercise_type", "")
+            
+            # Utiliser le type d'exercice dans la clé de regroupement s'il est disponible
+            if has_exercise_type and exercise_type:
+                # Clé qui inclut le type d'exercice pour une séparation claire
+                key = f"{student}_{exercise_type}_{test_input}"
+            elif has_execution_id and "execution_id" in result:
+                # Utiliser l'ID d'exécution s'il est disponible
+                key = f"{student}_{result['execution_id']}"
+            else:
+                # Sinon, créer une clé qui garantit l'unicité pour chaque test d'exercice
+                key = f"{student}_{exercise_id}_{test_input}"
             
             # Si c'est un nouveau groupe ou un résultat réussi, le conserver
             if key not in grouped_results or result.get("success", False):
@@ -898,6 +1051,14 @@ class ResultsWidget(QWidget):
         # Convertir de nouveau en liste
         filtered_results = list(grouped_results.values())
         logging.info(f"Après filtrage: {len(filtered_results)} résultats uniques")
+        
+        # Trier les résultats pour regrouper par étudiant puis par exercice
+        filtered_results.sort(key=lambda x: (
+            x["student"], 
+            x.get("exercise_type", ""), 
+            x.get("exercise_id", ""), 
+            x.get("input", "")
+        ))
         
         # Ajouter les résultats au tableau
         if filtered_results:
@@ -910,8 +1071,19 @@ class ResultsWidget(QWidget):
                 student_item.setFont(QFont("Arial", 10, QFont.Bold))
                 self.execution_results_table.setItem(i, 0, student_item)
                 
-                # Exercice
-                exercise_item = QTableWidgetItem(result["exercise"])
+                # Exercice - afficher le nom complet avec l'ID si disponible
+                exercise_name = result["exercise"]
+                exercise_id = result.get("exercise_id", "")
+                exercise_type = result.get("exercise_type", "")
+                
+                if exercise_type:
+                    display_name = f"{exercise_name} ({exercise_type})"
+                elif exercise_id:
+                    display_name = f"{exercise_name} ({exercise_id})"
+                else:
+                    display_name = exercise_name
+                
+                exercise_item = QTableWidgetItem(display_name)
                 exercise_item.setTextAlignment(Qt.AlignCenter)
                 self.execution_results_table.setItem(i, 1, exercise_item)
                 
@@ -962,14 +1134,30 @@ class ResultsWidget(QWidget):
                     }
                 """)
                 
-                # Préparer le texte complet pour l'affichage
-                full_output = f"=== SORTIE STANDARD ===\n{result.get('stdout', '')}\n\n"
+                # Construire un titre et un contenu détaillés qui identifient clairement l'exercice
+                display_title = f"{result['student']} - {exercise_name}"
+                if exercise_type:
+                    display_title += f" ({exercise_type})"
+                elif exercise_id:
+                    display_title += f" ({exercise_id})"
+                display_title += f" - Entrée: {input_value}"
+                
+                # Préparer le texte complet pour l'affichage avec des informations d'identification claires
+                full_output = f"=== EXERCICE: {exercise_name}"
+                if exercise_type:
+                    full_output += f" [{exercise_type}]"
+                elif exercise_id:
+                    full_output += f" ({exercise_id})"
+                full_output += " ===\n"
+                
+                full_output += f"=== ENTRÉE: {input_value} ===\n\n"
+                full_output += f"=== SORTIE STANDARD ===\n{result.get('stdout', '')}\n\n"
                 if result.get("stderr", ""):
                     full_output += f"=== ERREURS ===\n{result.get('stderr', '')}"
                 
                 # Stocker la sortie complète et configurer le bouton
                 view_output_button.clicked.connect(
-                    lambda checked, output=full_output, title=f"{result['student']} - {result['exercise']}": 
+                    lambda checked, output=full_output, title=display_title: 
                     self.show_output_dialog(title, output)
                 )
                 
@@ -1072,13 +1260,51 @@ class ResultsWidget(QWidget):
     def get_current_assessment_name(self):
         """Récupère le nom de l'évaluation actuellement affichée"""
         try:
+            # Vérifier d'abord les fichiers dans le tableau pour identifier le TD
+            file_names = []
+            exercise_names = []
+            for row in range(self.results_table.rowCount()):
+                exercise_widget = self.results_table.cellWidget(row, 1)
+                if isinstance(exercise_widget, ExerciseWidget):
+                    file_name = exercise_widget.get_file_name()
+                    exercise_name = exercise_widget.get_exercise_name()
+                    file_names.append(file_name.lower())
+                    exercise_names.append(exercise_name.lower())
+            
+            # Classifier par numéros de préfixe (ex: 09-, 10- => TD3)
+            prefixes = [re.match(r'^(\d+)-', file) for file in file_names if re.match(r'^(\d+)-', file)]
+            prefix_nums = [int(match.group(1)) for match in prefixes if match]
+            
+            if prefix_nums:
+                # Classifier par plages de numéros
+                if any(1 <= num <= 4 for num in prefix_nums):
+                    return "TD1"
+                elif any(5 <= num <= 8 for num in prefix_nums):
+                    return "TD2"
+                elif any(9 <= num <= 10 for num in prefix_nums):
+                    return "TD3"
+                elif any(11 <= num <= 14 for num in prefix_nums):
+                    return "TD4"
+            
+            # Recherche par mots-clés spécifiques dans les noms d'exercices
+            all_texts = file_names + exercise_names
+            
+            # TD3 keywords
+            if any("fonction-racine" in text or "racine-carree" in text or "racine" in text for text in all_texts) and \
+               any("comptage-mots" in text or "comptage" in text or "mots" in text for text in all_texts):
+                return "TD3"
+                
+            # TD1 keywords  
+            if any("triangle" in text for text in all_texts) and \
+               any("sequence" in text for text in all_texts):
+                return "TD1"
+            
             # Vérifier si le nom de l'évaluation est stocké dans le tableau
             for row in range(self.results_table.rowCount()):
                 for col in range(self.results_table.columnCount()):
                     item = self.results_table.item(row, col)
                     if item and "TD" in item.text():
                         # Chercher un pattern "TD1", "TD2", etc.
-                        import re
                         match = re.search(r'TD\d+', item.text())
                         if match:
                             return match.group(0)
@@ -1090,28 +1316,42 @@ class ResultsWidget(QWidget):
                     match = re.search(r'TD\d+', title_text)
                     if match:
                         return match.group(0)
-            
-            # Essayer de déterminer d'après les exercices affichés
-            exercise_ids = []
-            for row in range(self.results_table.rowCount()):
-                exercise_widget = self.results_table.cellWidget(row, 1)
-                if isinstance(exercise_widget, ExerciseWidget):
-                    exercise_name = exercise_widget.get_exercise_name()
-                    exercise_ids.append(exercise_name)
-            
-            # Associer les noms d'exercices aux TDs
-            if any("fonction-racine" in ex.lower() or "comptage-mots" in ex.lower() for ex in exercise_ids):
-                return "TD3"
-            elif any("triangle" in ex.lower() or "sequence" in ex.lower() for ex in exercise_ids):
+                        
+            # Dernière tentative: vérifier les mots-clés individuels
+            if any("09-" in f or "fonction-racine" in f or "racine" in f for f in all_texts):
+                return "TD3"  # Fonction racine carrée est dans TD3
+            elif any("10-" in f or "comptage-mots" in f or "comptage" in f for f in all_texts):
+                return "TD3"  # Comptage de mots est dans TD3
+            elif any("01-" in f or "02-" in f or "03-" in f or "04-" in f or "triangle" in f or "sequence" in f for f in all_texts):
                 return "TD1"
+            elif any("05-" in f or "06-" in f or "07-" in f or "08-" in f for f in all_texts):
+                return "TD2"
+            elif any("11-" in f or "12-" in f or "13-" in f or "14-" in f for f in all_texts):
+                return "TD4"
+                
         except Exception as e:
             print(f"Erreur lors de la récupération du nom de l'évaluation: {e}")
         
-        return None
+        # If all else fails, check the file structure
+        try:
+            from pathlib import Path
+            base_dir = Path(os.getcwd()) / "tests" / "java_samples"
+            for td_dir in base_dir.glob("TD*"):
+                if td_dir.is_dir() and any(td_dir.glob("**/*.java")):
+                    return td_dir.name
+        except Exception as e:
+            print(f"Erreur lors de la recherche dans la structure de fichiers: {e}")
+            
+        return "TD3"  # Default to TD3 as fallback
     
     def get_analysis_data(self, student, exercise_id):
         """Récupère les données d'analyse pour un étudiant et un exercice spécifiques"""
-        # Chercher l'exercice dans les résultats
+        print(f"Recherche des données pour {student}/{exercise_id}")
+        code = None
+        analysis_results = None
+        execution_results = None
+        
+        # Première étape: chercher dans le tableau de résultats
         for row in range(self.results_table.rowCount()):
             student_item = self.results_table.item(row, 0)
             if student_item and student_item.text() == student:
@@ -1120,50 +1360,101 @@ class ResultsWidget(QWidget):
                     exercise_name = exercise_widget.get_exercise_name()
                     file_name = exercise_widget.get_file_name()
                     
-                    # Vérifier si cet exercice correspond à l'ID demandé
-                    if (exercise_id == exercise_name.replace(" ", "-").lower() or
-                        exercise_id.lower() in file_name.lower()):
+                    # Vérifier la correspondance de l'exercice
+                    match_conditions = [
+                        exercise_id == exercise_name.replace(" ", "-").lower(),
+                        exercise_id.lower() in file_name.lower(),
+                        "fonction-racine" in exercise_id.lower() and ("racine" in file_name.lower() or "racine" in exercise_name.lower()),
+                        "comptage-mots" in exercise_id.lower() and ("mot" in file_name.lower() or "comptage" in file_name.lower()),
+                        "09-" in exercise_id and ("racine" in file_name.lower() or "racine" in exercise_name.lower()),
+                        "10-" in exercise_id and ("mot" in file_name.lower() or "comptage" in file_name.lower()),
+                    ]
+                    
+                    if any(match_conditions):
+                        print(f"Exercice trouvé dans le tableau: {exercise_name} / {file_name}")
                         
-                        # Récupérer le code source
-                        code = None
-                        try:
-                            # Format attendu: répertoire étudiant/nom du fichier
-                            file_path = None
-                            for td_dir in glob.glob(os.path.join(os.getcwd(), "tests", "java_samples", "TD*")):
-                                possible_path = os.path.join(td_dir, student, file_name)
-                                if os.path.exists(possible_path):
-                                    file_path = possible_path
-                                    break
-                            
-                            if file_path and os.path.exists(file_path):
-                                with open(file_path, 'r', encoding='utf-8') as f:
-                                    code = f.read()
-                        except Exception as e:
-                            print(f"Erreur lors de la lecture du code source: {e}")
-                        
-                        # Récupérer les résultats d'analyse depuis le widget de statut
+                        # Récupérer le statut et résultats d'analyse
                         status_widget = self.results_table.cellWidget(row, 2)
-                        analysis_results = "Analyse effectuée mais résultats non disponibles"
                         if isinstance(status_widget, StatusWidget):
                             analysis_results = status_widget.get_detailed_status()
+                            print(f"Résultats d'analyse récupérés de StatusWidget")
                         
-                        # Récupérer les résultats d'exécution (si disponibles)
-                        execution_results = "Pas de résultats d'exécution disponibles"
-                        
-                        # Si aucun code trouvé, créer un squelette basique
-                        if not code:
-                            if "triangle" in exercise_id.lower():
-                                code = "public class Triangle {\n    public static boolean estTriangleIsocele(int a, int b, int c) {\n        // Code manquant\n        return false;\n    }\n}"
-                            elif "sequence" in exercise_id.lower():
-                                code = "public class Sequence {\n    public static int sommeSequence(int n) {\n        // Code manquant\n        return 0;\n    }\n}"
-                            elif "racine" in exercise_id.lower():
-                                code = "public class RacineCarree {\n    public static double calculerRacineCarree(double nombre) {\n        // Code manquant\n        return 0.0;\n    }\n}"
-                            elif "comptage" in exercise_id.lower() or "mots" in exercise_id.lower():
-                                code = "public class ComptageMots {\n    public static int compterMots(String texte) {\n        // Code manquant\n        return 0;\n    }\n}"
-                            else:
-                                code = f"// Code pour l'exercice {exercise_id} non disponible"
-                        
-                        return code, analysis_results, execution_results 
+                        # Récupérer le résultat
+                        result_widget = self.results_table.cellWidget(row, 3)
+                        if isinstance(result_widget, QLabel):
+                            result_text = result_widget.text()
+                            if result_text and "vérification" in result_text:
+                                execution_results = f"Résultat des tests: {result_text}"
+                                print(f"Résultats d'exécution récupérés de ResultWidget: {result_text}")
         
-        # Si on n'a pas trouvé l'exercice, retourner des valeurs par défaut
-        return None, "Pas de résultats d'analyse disponibles", "Pas de résultats d'exécution disponibles" 
+        # Deuxième étape: chercher le fichier de code
+        file_path = None
+        
+        # Chercher dans les dossiers TD* par nom d'exercice
+        search_paths = []
+        
+        # Rechercher dans les dossiers TD*
+        for td_dir in glob.glob(os.path.join(os.getcwd(), "tests", "java_samples", "TD*")):
+            student_dir = os.path.join(td_dir, student)
+            if os.path.exists(student_dir):
+                search_paths.append(student_dir)
+        
+        # Chercher directement dans le dossier de l'étudiant
+        student_dir = os.path.join(os.getcwd(), "tests", "java_samples", student)
+        if os.path.exists(student_dir):
+            search_paths.append(student_dir)
+        
+        # Définir des patterns de recherche spécifiques
+        if "fonction-racine" in exercise_id.lower() or "09-" in exercise_id:
+            patterns = ["racine", "carre", "fonction", "racine-carree", "racinecarre"]
+        elif "comptage-mots" in exercise_id.lower() or "10-" in exercise_id:
+            patterns = ["mots", "comptage", "compteur", "comptage-mots", "comptagemots"]
+        else:
+            # Extraction du nom de base (sans préfixe numérique)
+            base_name = exercise_id.split('-', 1)[1] if '-' in exercise_id else exercise_id
+            patterns = [base_name, exercise_id]
+        
+        # Recherche de fichiers par pattern
+        for path in search_paths:
+            java_files = glob.glob(os.path.join(path, "*.java"))
+            for java_file in java_files:
+                file_name = os.path.basename(java_file).lower()
+                if any(pattern.lower() in file_name for pattern in patterns):
+                    file_path = java_file
+                    print(f"Code source trouvé à: {file_path}")
+                    break
+            if file_path:
+                break
+                
+        # Lire le contenu du fichier trouvé
+        if file_path and os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    code = f.read()
+                print(f"Code source lu avec succès: {len(code)} caractères")
+            except Exception as e:
+                print(f"Erreur lors de la lecture du fichier {file_path}: {e}")
+        
+        # Si aucun code trouvé, créer un squelette basique
+        if not code:
+            print(f"Aucun code trouvé pour {student}/{exercise_id}. Création d'un squelette.")
+            if "triangle" in exercise_id.lower():
+                code = "public class Triangle {\n    public static boolean estTriangleIsocele(int a, int b, int c) {\n        // Code manquant\n        return false;\n    }\n}"
+            elif "sequence" in exercise_id.lower():
+                code = "public class Sequence {\n    public static int sommeSequence(int n) {\n        // Code manquant\n        return 0;\n    }\n}"
+            elif "racine" in exercise_id.lower() or "09-" in exercise_id:
+                code = "public class RacineCarree {\n    public static double calculerRacineCarree(double nombre) {\n        // Code manquant\n        return 0.0;\n    }\n}"
+            elif "comptage" in exercise_id.lower() or "mots" in exercise_id.lower() or "10-" in exercise_id:
+                code = "public class ComptageMots {\n    public static int compterMots(String texte) {\n        // Code manquant\n        return 0;\n    }\n}"
+            else:
+                code = f"// Code pour l'exercice {exercise_id} non disponible"
+        
+        # Valeurs par défaut si non définies
+        if not analysis_results:
+            analysis_results = "Analyse effectuée mais résultats non disponibles dans l'interface."
+            
+        if not execution_results:
+            execution_results = "Résultats d'exécution non disponibles dans l'interface."
+            
+        print(f"Données récupérées pour {student}/{exercise_id}: code={bool(code)}, analyse={bool(analysis_results)}, exécution={bool(execution_results)}")
+        return code, analysis_results, execution_results 

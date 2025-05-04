@@ -272,33 +272,29 @@ class JavaExecutor:
         
         # Si la compilation réussit, exécuter chaque test
         for input_val in test_inputs:
-            # Créer un fichier temporaire pour l'entrée
-            with tempfile.NamedTemporaryFile(mode='w+', delete=False) as input_file:
-                input_file.write(input_val)
-                input_file_path = input_file.name
+            # Extraire le nom de la classe Java pour ce fichier
+            file_name = os.path.basename(file_path)
+            class_name = os.path.splitext(file_name)[0]
+            
+            # Vérifier s'il y a un nom de classe réel différent qui a été détecté lors de la compilation
+            real_class_name = getattr(self, '_real_class_name', class_name)
+            
+            compile_dir = os.path.join(self.temp_dir, class_name)
+            
+            # Vérifier si le fichier .class existe avec le nom réel
+            class_file_path = os.path.join(compile_dir, f"{real_class_name}.class")
+            if not os.path.exists(class_file_path):
+                # Chercher tout fichier .class dans le répertoire
+                class_files = [f for f in os.listdir(compile_dir) if f.endswith('.class')]
+                if class_files:
+                    # Utiliser le premier fichier .class trouvé
+                    real_class_name = os.path.splitext(class_files[0])[0]
+                    logger.info(f"Utilisation de la classe trouvée: {real_class_name}")
+            
+            logger.info(f"Test de {real_class_name} avec entrée '{input_val}'")
             
             try:
-                # Exécuter avec l'entrée redirigée
-                file_name = os.path.basename(file_path)
-                class_name = os.path.splitext(file_name)[0]
-                
-                # Vérifier s'il y a un nom de classe réel différent qui a été détecté lors de la compilation
-                real_class_name = getattr(self, '_real_class_name', class_name)
-                
-                compile_dir = os.path.join(self.temp_dir, class_name)
-                
-                # Vérifier si le fichier .class existe avec le nom réel
-                class_file_path = os.path.join(compile_dir, f"{real_class_name}.class")
-                if not os.path.exists(class_file_path):
-                    # Chercher tout fichier .class dans le répertoire
-                    class_files = [f for f in os.listdir(compile_dir) if f.endswith('.class')]
-                    if class_files:
-                        # Utiliser le premier fichier .class trouvé
-                        real_class_name = os.path.splitext(class_files[0])[0]
-                        logger.info(f"Utilisation de la classe trouvée: {real_class_name}")
-                
-                logger.info(f"Test de {real_class_name} avec entrée '{input_val}'")
-                
+                # Exécuter le programme avec cette entrée spécifique
                 process = subprocess.Popen(
                     ['java', '-cp', compile_dir, real_class_name],
                     stdin=subprocess.PIPE,
@@ -308,9 +304,11 @@ class JavaExecutor:
                 )
                 
                 try:
+                    # Fournir l'entrée et récupérer la sortie pour ce test spécifique
                     stdout, stderr = process.communicate(input=input_val, timeout=timeout)
                     success = process.returncode == 0
                     
+                    # Ajouter ce résultat spécifique à la liste des résultats
                     results.append({
                         "input": input_val,
                         "success": success,
@@ -341,10 +339,6 @@ class JavaExecutor:
                     "stderr": f"Erreur d'exécution: {str(e)}"
                 })
                 logger.error(f"Erreur pour test avec entrée '{input_val}': {str(e)}")
-            
-            finally:
-                # Nettoyer le fichier temporaire
-                os.unlink(input_file_path)
         
         return results
     

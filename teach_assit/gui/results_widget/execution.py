@@ -261,12 +261,46 @@ class CodeExecutor:
             return [self._create_error_result(input_val, "Fichier non trouvé") for input_val in test_inputs]
         
         try:
+            # Extraire les informations sur l'exercice
+            file_name = os.path.basename(file_path)
+            base_name, ext = os.path.splitext(file_name)
+            
+            # Identifier le type d'exercice
+            exercise_info = self._extract_assessment_info(file_name.lower())
+            exercise_type = "Non déterminé"
+            if exercise_info["td_name"]:
+                exercise_type = f"{exercise_info['td_name']}"
+                if exercise_info["exercise_id"]:
+                    exercise_type += f"/{exercise_info['exercise_id']}"
+                elif exercise_info["keywords"]:
+                    exercise_type += f"/{'-'.join(exercise_info['keywords'])}"
+            
+            logging.info(f"Exécution de l'exercice {exercise_type} avec {len(test_inputs)} entrées")
+            
             # Vérifier si le fichier est un fichier Java
-            if file_path.lower().endswith('.java'):
+            if ext.lower() == '.java':
                 # Prétraiter le fichier pour éviter les erreurs de nom de classe/fichier
                 file_path = self._preprocess_java_file(file_path)
                 
-            return self.executor.test_with_inputs(file_path, test_inputs)
+                # Exécuter le code avec les entrées de test
+                results = self.executor.test_with_inputs(file_path, test_inputs)
+                
+                # Ajouter des informations d'identification pour chaque résultat
+                for result in results:
+                    # Ajouter une référence au type d'exercice pour identifier 
+                    # clairement à quel exercice correspond ce résultat
+                    result["exercise_type"] = exercise_type
+                    
+                    # Enregistrer l'entrée et la sortie pour le débogage
+                    input_val = result["input"]
+                    stdout = result.get("stdout", "")
+                    logging.info(f"Résultat pour {exercise_type}, entrée: '{input_val}'\nSortie: '{stdout[:100]}...'")
+                
+                return results
+            else:
+                error_msg = f"Type de fichier non pris en charge: {file_path}"
+                logging.error(error_msg)
+                return [self._create_error_result(input_val, error_msg) for input_val in test_inputs]
         except Exception as e:
             import traceback
             error_msg = f"Erreur d'exécution: {str(e)}\n{traceback.format_exc()}"

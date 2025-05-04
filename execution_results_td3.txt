@@ -1,5 +1,5 @@
 Exercices identifiés pour TD3: ['09-fonction-racine-carree', '10-comptage-mots']
-Trouvé 4 fichiers Java à exécuter:
+Trouvé 6 fichiers Java à exécuter:
 
 ==================================================
 ℹ️ RAPPORT D'EXÉCUTION: tests/java_samples/TD3\Etudiant1\09-fonction-racine-carree.java (Étudiant: Etudiant1)
@@ -149,6 +149,154 @@ La chaÃ®ne "Un	Mot	Par	Tabulation" contient 4 mots.
 La chaÃ®ne "Sauts
 De
 Ligne" contient 3 mots.
+
+
+✅ RÉSULTAT GLOBAL: TOUS LES TESTS RÉUSSIS
+
+==================================================
+ℹ️ RAPPORT D'EXÉCUTION: tests/java_samples/TD3\Etudiant1\_temp_java_files\CompteurMots.java (Étudiant: _temp_java_files)
+==================================================
+ℹ️ Classe principale détectée: CompteurMots
+ℹ️ Exercice identifié: Comptage de Mots (10-comptage-mots)
+  Description: Écrire une méthode qui compte le nombre de mots dans une chaîne de caractères. Les mots sont séparés par des espaces, des tabulations ou des retours à la ligne.
+ℹ️ Exécution avec 6 entrées de test: [Bonjour le monde], [Un	deux	trois
+quatre], [], [   ], [Un    deux  trois], [Bonjour-le-monde]
+
+✅ Test #1 (Bonjour le monde): SUCCÈS
+  Sortie standard:
+La chaÃ®ne "Bonjour le monde" contient 3 mots.
+La chaÃ®ne "   Espaces   en   trop   " contient 3 mots.
+La chaÃ®ne "" contient 0 mots.
+La chaÃ®ne null contient 0 mots: 0
+La chaÃ®ne "Un	Mot	Par	Tabulation" contient 4 mots.
+La chaÃ®ne "Sauts
+De
+Ligne" contient 3 mots.
+
+
+✅ Test #2 (Un	deux	trois
+quatre): SUCCÈS
+  Sortie standard:
+La chaÃ®ne "Bonjour le monde" contient 3 mots.
+La chaÃ®ne "   Espaces   en   trop   " contient 3 mots.
+La chaÃ®ne "" contient 0 mots.
+La chaÃ®ne null contient 0 mots: 0
+La chaÃ®ne "Un	Mot	Par	Tabulation" contient 4 mots.
+La chaÃ®ne "Sauts
+De
+Ligne" contient 3 mots.
+
+
+✅ Exécution sans entrée (): SUCCÈS
+  Sortie standard:
+La chaÃ®ne "Bonjour le monde" contient 3 mots.
+La chaÃ®ne "   Espaces   en   trop   " contient 3 mots.
+La chaÃ®ne "" contient 0 mots.
+La chaÃ®ne null contient 0 mots: 0
+La chaÃ®ne "Un	Mot	Par	Tabulation" contient 4 mots.
+La chaÃ®ne "Sauts
+De
+Ligne" contient 3 mots.
+
+
+✅ Test #4 (   ): SUCCÈS
+  Sortie standard:
+La chaÃ®ne "Bonjour le monde" contient 3 mots.
+La chaÃ®ne "   Espaces   en   trop   " contient 3 mots.
+La chaÃ®ne "" contient 0 mots.
+La chaÃ®ne null contient 0 mots: 0
+La chaÃ®ne "Un	Mot	Par	Tabulation" contient 4 mots.
+La chaÃ®ne "Sauts
+De
+Ligne" contient 3 mots.
+
+
+✅ Test #5 (Un    deux  trois): SUCCÈS
+  Sortie standard:
+La chaÃ®ne "Bonjour le monde" contient 3 mots.
+La chaÃ®ne "   Espaces   en   trop   " contient 3 mots.
+La chaÃ®ne "" contient 0 mots.
+La chaÃ®ne null contient 0 mots: 0
+La chaÃ®ne "Un	Mot	Par	Tabulation" contient 4 mots.
+La chaÃ®ne "Sauts
+De
+Ligne" contient 3 mots.
+
+
+✅ Test #6 (Bonjour-le-monde): SUCCÈS
+  Sortie standard:
+La chaÃ®ne "Bonjour le monde" contient 3 mots.
+La chaÃ®ne "   Espaces   en   trop   " contient 3 mots.
+La chaÃ®ne "" contient 0 mots.
+La chaÃ®ne null contient 0 mots: 0
+La chaÃ®ne "Un	Mot	Par	Tabulation" contient 4 mots.
+La chaÃ®ne "Sauts
+De
+Ligne" contient 3 mots.
+
+
+✅ RÉSULTAT GLOBAL: TOUS LES TESTS RÉUSSIS
+
+==================================================
+ℹ️ RAPPORT D'EXÉCUTION: tests/java_samples/TD3\Etudiant1\_temp_java_files\RacineCarree.java (Étudiant: _temp_java_files)
+==================================================
+ℹ️ Classe principale détectée: RacineCarree
+ℹ️ Exercice identifié: Fonction Racine Carrée (09-fonction-racine-carree)
+  Description: Écrire une méthode qui calcule la racine carrée d'un nombre en vérifiant que le nombre est positif ou nul.
+ℹ️ Exécution avec 6 entrées de test: [4], [0], [9], [-4], [2], [100]
+
+✅ Test #1 (4): SUCCÈS
+  Sortie standard:
+La racine carrÃ©e de 16.0 est 4.0
+La racine carrÃ©e de 25.0 est 5.0
+La racine carrÃ©e de 0.0 est 0.0
+Erreur: Le nombre doit Ãªtre positif ou nul
+La racine carrÃ©e de -4.0 n'est pas dÃ©finie.
+
+
+✅ Test #2 (0): SUCCÈS
+  Sortie standard:
+La racine carrÃ©e de 16.0 est 4.0
+La racine carrÃ©e de 25.0 est 5.0
+La racine carrÃ©e de 0.0 est 0.0
+Erreur: Le nombre doit Ãªtre positif ou nul
+La racine carrÃ©e de -4.0 n'est pas dÃ©finie.
+
+
+✅ Test #3 (9): SUCCÈS
+  Sortie standard:
+La racine carrÃ©e de 16.0 est 4.0
+La racine carrÃ©e de 25.0 est 5.0
+La racine carrÃ©e de 0.0 est 0.0
+Erreur: Le nombre doit Ãªtre positif ou nul
+La racine carrÃ©e de -4.0 n'est pas dÃ©finie.
+
+
+✅ Test #4 (-4): SUCCÈS
+  Sortie standard:
+La racine carrÃ©e de 16.0 est 4.0
+La racine carrÃ©e de 25.0 est 5.0
+La racine carrÃ©e de 0.0 est 0.0
+Erreur: Le nombre doit Ãªtre positif ou nul
+La racine carrÃ©e de -4.0 n'est pas dÃ©finie.
+
+
+✅ Test #5 (2): SUCCÈS
+  Sortie standard:
+La racine carrÃ©e de 16.0 est 4.0
+La racine carrÃ©e de 25.0 est 5.0
+La racine carrÃ©e de 0.0 est 0.0
+Erreur: Le nombre doit Ãªtre positif ou nul
+La racine carrÃ©e de -4.0 n'est pas dÃ©finie.
+
+
+✅ Test #6 (100): SUCCÈS
+  Sortie standard:
+La racine carrÃ©e de 16.0 est 4.0
+La racine carrÃ©e de 25.0 est 5.0
+La racine carrÃ©e de 0.0 est 0.0
+Erreur: Le nombre doit Ãªtre positif ou nul
+La racine carrÃ©e de -4.0 n'est pas dÃ©finie.
 
 
 ✅ RÉSULTAT GLOBAL: TOUS LES TESTS RÉUSSIS
