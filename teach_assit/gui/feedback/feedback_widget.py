@@ -583,6 +583,13 @@ class FeedbackWidget(QWidget):
                     'status': status,
                     'result': ""  # Sera rempli si disponible
                 }
+                
+                # Ajouter l'ID de l'évaluation (TD) actuelle
+                if self.results_widget and hasattr(self.results_widget, 'get_current_assessment_name'):
+                    current_assessment = self.results_widget.get_current_assessment_name()
+                    if current_assessment:
+                        exercise_data['assessment_id'] = current_assessment
+                        logging.info(f"ID du TD ajouté aux données d'exercice: {current_assessment}")
                     
                 # Vérifier si des résultats existent déjà pour cet exercice
                 result_data = self.data_manager.get_result_data(self.current_student, exercise_id)

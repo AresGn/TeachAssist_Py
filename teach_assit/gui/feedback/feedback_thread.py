@@ -4,6 +4,7 @@ Thread pour générer du feedback avec l'API Gemini sans bloquer l'interface.
 
 import json
 import re
+import os
 from PyQt5.QtCore import QThread, pyqtSignal
 from google import genai
 
@@ -69,6 +70,34 @@ class FeedbackThread(QThread):
             exercise_details = ""
             total_exercises = len(self.exercises_data)
             existing_scores = {}
+            assessment_info = {}  # Pour stocker les informations sur le TD actuel
+            
+            # Récupérer l'ID du TD actuel à partir du premier exercice
+            if self.exercises_data and 'config' in self.exercises_data[0]:
+                assessment_id = self.exercises_data[0].get('assessment_id', '')
+                if assessment_id:
+                    # Essayer de charger le fichier du TD pour obtenir les points max par exercice
+                    assessments_dir = os.path.join(os.getcwd(), "assessments")
+                    assessment_file = os.path.join(assessments_dir, f"{assessment_id}.json")
+                    if os.path.exists(assessment_file):
+                        try:
+                            with open(assessment_file, 'r', encoding='utf-8') as f:
+                                assessment_info = json.load(f)
+                                print(f"Informations du TD chargées: {assessment_id}")
+                        except Exception as e:
+                            print(f"Erreur lors du chargement du fichier TD {assessment_file}: {str(e)}")
+            
+            # Informations sur le TD à utiliser dans le prompt
+            td_name = assessment_info.get('name', 'Travaux Dirigés')
+            td_max_points = assessment_info.get('totalMaxPoints', 20)  # Par défaut 20 points
+            exercise_max_points = {}
+            
+            # Extraire les points maximum pour chaque exercice du fichier TD
+            for ex in assessment_info.get('exercises', []):
+                ex_id = ex.get('exerciseId', '')
+                if ex_id and 'maxPoints' in ex:
+                    exercise_max_points[ex_id] = ex.get('maxPoints')
+                    print(f"Points maximum pour {ex_id}: {exercise_max_points[ex_id]}")
             
             for i, exercise in enumerate(self.exercises_data):
                 # Mettre à jour la progression (entre 20 et 50)
@@ -143,11 +172,19 @@ class FeedbackThread(QThread):
                 CRITÈRES D'ÉVALUATION:
                 """
                 
+                # Calculer le nombre de points maximum pour cet exercice
+                max_points = exercise_max_points.get(exercise_id, 20)  # Par défaut 20 points si non spécifié
+                
                 # Ajouter les critères de notation spécifiques à cet exercice avec insistance
                 grading_criteria = config.get('grading_criteria', []) if config else []
+                total_criteria_points = 0
+                
                 if grading_criteria:
+                    exercise_details += f"TOTAL: {max_points} points répartis comme suit:\n\n"
+                    
                     for criterion in grading_criteria:
                         points = criterion.get('points', 0)
+                        total_criteria_points += points
                         title = criterion.get('title', '')
                         description = criterion.get('description', '')
                         exercise_details += f"- {title} ({points} pts): {description}\n"
@@ -156,10 +193,15 @@ class FeedbackThread(QThread):
                         for subcriterion in subcriteria:
                             exercise_details += f"  * {subcriterion.get('text', '')}\n"
                 
+                    # Vérifier si les points des critères correspondent au total
+                    if total_criteria_points != max_points:
+                        exercise_details += f"\n** ATTENTION: Les points des critères ({total_criteria_points}) ne correspondent pas au total de l'exercice ({max_points}). "
+                        exercise_details += f"Tu dois ajuster la répartition pour que le total soit {max_points} points. **\n"
+                    
                     # Indiquer clairement que ces critères doivent être utilisés pour la notation
-                    exercise_details += "\n** IMPORTANT: Tu DOIS évaluer cet exercice en utilisant précisément ces critères et attribuer les points en fonction. **\n"
+                    exercise_details += f"\n** IMPORTANT: Tu DOIS évaluer cet exercice en utilisant précisément ces critères et attribuer les points en fonction, pour un total de {max_points} points. **\n"
                 else:
-                    exercise_details += "Aucun critère d'évaluation spécifié pour cet exercice.\n"
+                    exercise_details += f"Pas de critères spécifiques. Évaluer sur {max_points} points au total.\n"
                     
                 # Si des résultats d'analyse/exécution existent, extraire les critères satisfaits
                 criteres_satisfaits = []
@@ -219,6 +261,9 @@ class FeedbackThread(QThread):
             Tu es un assistant pédagogique spécialisé dans l'évaluation de code Java pour des étudiants.
             Analyse l'ensemble des exercices du TD pour l'étudiant {self.student_name} et fournis une évaluation complète.
             
+            TD: {td_name}
+            NOTE TOTALE MAXIMALE DU TD: {td_max_points} points
+            
             {exercise_details}
             
             NOTES EXISTANTES (TRÈS IMPORTANT - TU DOIS RESPECTER CES NOTES):
@@ -243,6 +288,7 @@ class FeedbackThread(QThread):
             4. Pour les exercices sans note existante:
                - Évalue de façon rigoureuse en utilisant les critères fournis
                - Attribue les points en fonction des critères précis définis pour chaque exercice
+            5. IMPORTANT: La note totale du TD est sur un maximum de %s points, et NON PAS la somme des points maximums de chaque exercice.
             
             IMPORTANT: Ta réponse DOIT être formatée en Markdown bien structuré avec:
             
@@ -260,20 +306,24 @@ class FeedbackThread(QThread):
             ### Points à améliorer
             - Liste des points à améliorer avec recommandations
             
-            ### Note: X/10
+            ### Note: X/Y
+            * Détail des points par critère:
+              - Critère 1: A/B points
+              - Critère 2: C/D points
+              - etc.
             
             ## Exercice 2: [Nom du deuxième exercice]
             
             *Même structure que l'exercice 1*
             
-            ## Note Globale pour le TD : X/20
+            ## Note Globale pour le TD : X/%s
             
             ## Recommandations générales
             
             - Liste de recommandations pour progresser
             
             RAPPEL: Respecte SCRUPULEUSEMENT les notes déjà attribuées indiquées dans "NOTES EXISTANTES".
-            """
+            """ % (td_max_points, td_max_points)
             
             # Émettre un signal de progression
             self.progress_changed.emit(80)
