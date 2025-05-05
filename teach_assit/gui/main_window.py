@@ -141,6 +141,13 @@ class MainWindow(QMainWindow):
         
         # Onglet Tableau de bord
         self.dashboard_tab = DashboardWidget()
+        # Transmettre les gestionnaires au tableau de bord amélioré si disponible
+        if hasattr(self.dashboard_tab, 'enhanced_dashboard'):
+            self.dashboard_tab.enhanced_dashboard.submission_manager = self.submission_manager
+            self.dashboard_tab.enhanced_dashboard.db_manager = self.submission_manager.db_manager if self.submission_manager else None
+            # Mettre à jour les données du tableau de bord
+            self.dashboard_tab.update_dashboard()
+        
         self.tab_widget.addTab(self.dashboard_tab, "Tableau de bord")
         
         # Onglet Fichiers (remplace l'onglet d'extraction)
@@ -458,6 +465,10 @@ class MainWindow(QMainWindow):
         # Si on passe à l'onglet d'analyse, mettre à jour le tableau des soumissions
         if index == 2:  # Onglet Analyse
             self.update_submission_table()
+        # Si on passe à l'onglet du tableau de bord, mettre à jour les données
+        elif index == 0:  # Onglet Tableau de bord
+            if hasattr(self.dashboard_tab, 'update_dashboard'):
+                self.dashboard_tab.update_dashboard()
         
         # Sélectionner le bouton actif
         if index == 0:
