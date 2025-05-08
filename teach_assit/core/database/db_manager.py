@@ -4,10 +4,17 @@ Permet de stocker les informations sur les fichiers ZIP et les dossiers extraits
 """
 
 import os
-import sqlite3
-import datetime
 from pathlib import Path
-import json
+
+from teach_assit.core.database.managers import (
+    ConnectionProvider,
+    SchemaManager,
+    ZipManager,
+    ExerciseManager,
+    AssessmentManager,
+    SettingsManager,
+    FeedbackManager
+)
 
 class DatabaseManager:
     """Gestionnaire de base de données SQLite pour l'application TeachAssist."""
@@ -30,101 +37,21 @@ class DatabaseManager:
         else:
             self.db_path = db_path
         
-        self._initialize_database()
+        # Initialise le fournisseur de connexion
+        self.connection_provider = ConnectionProvider(self.db_path)
+        
+        # Initialise les gestionnaires spécialisés
+        self.schema_manager = SchemaManager(self.connection_provider)
+        self.zip_manager = ZipManager(self.connection_provider)
+        self.exercise_manager = ExerciseManager(self.connection_provider)
+        self.assessment_manager = AssessmentManager(self.connection_provider)
+        self.settings_manager = SettingsManager(self.connection_provider)
+        self.feedback_manager = FeedbackManager(self.connection_provider)
+        
+        # Initialisation de la structure de la base de données
+        self.schema_manager.initialize_database()
     
-    def _initialize_database(self):
-        """Initialise la structure de la base de données si elle n'existe pas."""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # Table pour les fichiers ZIP
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS zip_files (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            filename TEXT NOT NULL,
-            filepath TEXT NOT NULL,
-            file_size INTEGER NOT NULL,
-            upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            md5_hash TEXT,
-            description TEXT
-        )
-        ''')
-        
-        # Table pour les dossiers extraits
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS extracted_folders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            zip_id INTEGER NOT NULL,
-            folder_path TEXT NOT NULL,
-            extraction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            status TEXT DEFAULT 'active',
-            FOREIGN KEY (zip_id) REFERENCES zip_files (id)
-        )
-        ''')
-        
-        # Table pour les fichiers individuels dans les dossiers extraits
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS extracted_files (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            folder_id INTEGER NOT NULL,
-            filepath TEXT NOT NULL,
-            file_size INTEGER NOT NULL,
-            file_type TEXT,
-            FOREIGN KEY (folder_id) REFERENCES extracted_folders (id)
-        )
-        ''')
-        
-        # Table pour les configurations d'exercices
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS exercise_configs (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            description TEXT,
-            difficulty INTEGER DEFAULT 1,
-            test_inputs TEXT,  -- Stockage JSON des entrées de test
-            rules TEXT,        -- Stockage JSON des règles
-            grading_criteria TEXT,  -- Stockage JSON des critères d'évaluation
-            last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        ''')
-        
-        # Table pour les configurations d'évaluations
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS assessment_configs (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            exercises TEXT,     -- Stockage JSON des exercices
-            total_max_points INTEGER DEFAULT 0,
-            last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        ''')
-        
-        # Table pour les paramètres de l'application
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS application_settings (
-            key TEXT PRIMARY KEY,
-            value TEXT,
-            description TEXT,
-            last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        ''')
-        
-        # Table pour les feedbacks générés
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS feedbacks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_name TEXT NOT NULL,
-            assessment_id TEXT,
-            feedback_content TEXT NOT NULL,
-            global_grade TEXT,
-            creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            hash_id TEXT UNIQUE,
-            FOREIGN KEY (assessment_id) REFERENCES assessment_configs (id) ON DELETE SET NULL
-        )
-        ''')
-        
-        conn.commit()
-        conn.close()
+    # Méthodes déléguées au ZipManager
     
     def add_zip_file(self, filename, filepath, file_size, md5_hash=None, description=None):
         """
@@ -140,19 +67,7 @@ class DatabaseManager:
         Returns:
             int: ID du fichier ZIP dans la base de données
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-        INSERT INTO zip_files (filename, filepath, file_size, md5_hash, description)
-        VALUES (?, ?, ?, ?, ?)
-        ''', (filename, filepath, file_size, md5_hash, description))
-        
-        zip_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return zip_id
+        return self.zip_manager.add_zip_file(filename, filepath, file_size, md5_hash, description)
     
     def add_extracted_folder(self, zip_id, folder_path):
         """
@@ -165,19 +80,7 @@ class DatabaseManager:
         Returns:
             int: ID du dossier extrait
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-        INSERT INTO extracted_folders (zip_id, folder_path)
-        VALUES (?, ?)
-        ''', (zip_id, folder_path))
-        
-        folder_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return folder_id
+        return self.zip_manager.add_extracted_folder(zip_id, folder_path)
     
     def add_extracted_file(self, folder_id, filepath, file_size, file_type=None):
         """
@@ -192,19 +95,7 @@ class DatabaseManager:
         Returns:
             int: ID du fichier extrait
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-        INSERT INTO extracted_files (folder_id, filepath, file_size, file_type)
-        VALUES (?, ?, ?, ?)
-        ''', (folder_id, filepath, file_size, file_type))
-        
-        file_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return file_id
+        return self.zip_manager.add_extracted_file(folder_id, filepath, file_size, file_type)
     
     def get_all_zip_files(self):
         """
@@ -213,19 +104,7 @@ class DatabaseManager:
         Returns:
             list: Liste de tuples contenant les informations des fichiers ZIP
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-        SELECT id, filename, filepath, file_size, upload_date, md5_hash, description
-        FROM zip_files
-        ORDER BY upload_date DESC
-        ''')
-        
-        result = cursor.fetchall()
-        conn.close()
-        
-        return result
+        return self.zip_manager.get_all_zip_files()
     
     def get_extracted_folders_by_zip(self, zip_id):
         """
@@ -237,20 +116,7 @@ class DatabaseManager:
         Returns:
             list: Liste de tuples contenant les informations des dossiers
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-        SELECT id, folder_path, extraction_date, status
-        FROM extracted_folders
-        WHERE zip_id = ?
-        ORDER BY extraction_date DESC
-        ''', (zip_id,))
-        
-        result = cursor.fetchall()
-        conn.close()
-        
-        return result
+        return self.zip_manager.get_extracted_folders_by_zip(zip_id)
     
     def get_files_by_folder(self, folder_id):
         """
@@ -262,19 +128,7 @@ class DatabaseManager:
         Returns:
             list: Liste de tuples contenant les informations des fichiers
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-        SELECT id, filepath, file_size, file_type
-        FROM extracted_files
-        WHERE folder_id = ?
-        ''', (folder_id,))
-        
-        result = cursor.fetchall()
-        conn.close()
-        
-        return result
+        return self.zip_manager.get_files_by_folder(folder_id)
     
     def delete_zip_file(self, zip_id):
         """
@@ -286,31 +140,7 @@ class DatabaseManager:
         Returns:
             bool: True si la suppression a réussi
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            # Récupère tous les dossiers extraits
-            cursor.execute('SELECT id FROM extracted_folders WHERE zip_id = ?', (zip_id,))
-            folder_ids = [row[0] for row in cursor.fetchall()]
-            
-            # Supprime les fichiers extraits
-            for folder_id in folder_ids:
-                cursor.execute('DELETE FROM extracted_files WHERE folder_id = ?', (folder_id,))
-            
-            # Supprime les dossiers extraits
-            cursor.execute('DELETE FROM extracted_folders WHERE zip_id = ?', (zip_id,))
-            
-            # Supprime le fichier ZIP
-            cursor.execute('DELETE FROM zip_files WHERE id = ?', (zip_id,))
-            
-            conn.commit()
-            return True
-        except sqlite3.Error:
-            conn.rollback()
-            return False
-        finally:
-            conn.close()
+        return self.zip_manager.delete_zip_file(zip_id)
     
     def update_extracted_folder_status(self, folder_id, status):
         """
@@ -323,25 +153,9 @@ class DatabaseManager:
         Returns:
             bool: True si la mise à jour a réussi
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-            UPDATE extracted_folders
-            SET status = ?
-            WHERE id = ?
-            ''', (status, folder_id))
-            
-            conn.commit()
-            return True
-        except sqlite3.Error:
-            conn.rollback()
-            return False
-        finally:
-            conn.close()
-            
-    # Méthodes pour gérer les configurations d'exercices
+        return self.zip_manager.update_extracted_folder_status(folder_id, status)
+    
+    # Méthodes déléguées au ExerciseManager
     
     def add_exercise_config(self, config_dict):
         """
@@ -353,51 +167,8 @@ class DatabaseManager:
         Returns:
             bool: True si l'opération a réussi
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        exercise_id = config_dict.get('id')
-        if not exercise_id:
-            conn.close()
-            return False
-            
-        name = config_dict.get('name', '')
-        description = config_dict.get('description', '')
-        test_inputs = json.dumps(config_dict.get('testInputs', []))
-        rules = json.dumps(config_dict.get('rules', {}))
-        grading_criteria = json.dumps(config_dict.get('grading_criteria', []))
-        
-        try:
-            # Vérifier si l'exercice existe déjà
-            cursor.execute('SELECT id FROM exercise_configs WHERE id = ?', (exercise_id,))
-            existing = cursor.fetchone()
-            
-            if existing:
-                # Mise à jour
-                cursor.execute('''
-                UPDATE exercise_configs
-                SET name = ?, description = ?, 
-                    test_inputs = ?, rules = ?, grading_criteria = ?,
-                    last_modified = CURRENT_TIMESTAMP
-                WHERE id = ?
-                ''', (name, description, test_inputs, rules, grading_criteria, exercise_id))
-            else:
-                # Insertion
-                cursor.execute('''
-                INSERT INTO exercise_configs 
-                (id, name, description, test_inputs, rules, grading_criteria)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ''', (exercise_id, name, description, test_inputs, rules, grading_criteria))
-            
-            conn.commit()
-            return True
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de l'ajout de l'exercice {exercise_id}: {e}")
-            conn.rollback()
-            return False
-        finally:
-            conn.close()
-            
+        return self.exercise_manager.add_exercise_config(config_dict)
+    
     def get_exercise_config(self, exercise_id):
         """
         Récupère une configuration d'exercice par son ID.
@@ -408,34 +179,8 @@ class DatabaseManager:
         Returns:
             dict: Configuration de l'exercice, None si non trouvé
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-            SELECT id, name, description, test_inputs, rules, grading_criteria
-            FROM exercise_configs
-            WHERE id = ?
-            ''', (exercise_id,))
-            
-            row = cursor.fetchone()
-            
-            if row:
-                return {
-                    'id': row[0],
-                    'name': row[1],
-                    'description': row[2],
-                    'testInputs': json.loads(row[3]),
-                    'rules': json.loads(row[4]),
-                    'grading_criteria': json.loads(row[5])
-                }
-            return None
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la récupération de l'exercice {exercise_id}: {e}")
-            return None
-        finally:
-            conn.close()
-            
+        return self.exercise_manager.get_exercise_config(exercise_id)
+    
     def get_all_exercise_configs(self):
         """
         Récupère toutes les configurations d'exercices.
@@ -443,35 +188,8 @@ class DatabaseManager:
         Returns:
             dict: Dictionnaire de configurations {id: config_dict}
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-            SELECT id, name, description, test_inputs, rules, grading_criteria
-            FROM exercise_configs
-            ORDER BY name
-            ''')
-            
-            result = {}
-            for row in cursor.fetchall():
-                config = {
-                    'id': row[0],
-                    'name': row[1],
-                    'description': row[2],
-                    'testInputs': json.loads(row[3]),
-                    'rules': json.loads(row[4]),
-                    'grading_criteria': json.loads(row[5])
-                }
-                result[row[0]] = config
-                
-            return result
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la récupération des exercices: {e}")
-            return {}
-        finally:
-            conn.close()
-            
+        return self.exercise_manager.get_all_exercise_configs()
+    
     def delete_exercise_config(self, exercise_id):
         """
         Supprime une configuration d'exercice.
@@ -482,21 +200,9 @@ class DatabaseManager:
         Returns:
             bool: True si la suppression a réussi
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('DELETE FROM exercise_configs WHERE id = ?', (exercise_id,))
-            conn.commit()
-            return cursor.rowcount > 0
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la suppression de l'exercice {exercise_id}: {e}")
-            conn.rollback()
-            return False
-        finally:
-            conn.close()
-            
-    # Méthodes pour gérer les configurations d'évaluations
+        return self.exercise_manager.delete_exercise_config(exercise_id)
+    
+    # Méthodes déléguées au AssessmentManager
     
     def add_assessment_config(self, config_dict):
         """
@@ -508,48 +214,8 @@ class DatabaseManager:
         Returns:
             bool: True si l'opération a réussi
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        assessment_id = config_dict.get('assessmentId')
-        if not assessment_id:
-            conn.close()
-            return False
-            
-        name = config_dict.get('name', '')
-        exercises = json.dumps(config_dict.get('exercises', []))
-        total_max_points = config_dict.get('totalMaxPoints', 0)
-        
-        try:
-            # Vérifier si l'évaluation existe déjà
-            cursor.execute('SELECT id FROM assessment_configs WHERE id = ?', (assessment_id,))
-            existing = cursor.fetchone()
-            
-            if existing:
-                # Mise à jour
-                cursor.execute('''
-                UPDATE assessment_configs
-                SET name = ?, exercises = ?, total_max_points = ?,
-                    last_modified = CURRENT_TIMESTAMP
-                WHERE id = ?
-                ''', (name, exercises, total_max_points, assessment_id))
-            else:
-                # Insertion
-                cursor.execute('''
-                INSERT INTO assessment_configs 
-                (id, name, exercises, total_max_points)
-                VALUES (?, ?, ?, ?)
-                ''', (assessment_id, name, exercises, total_max_points))
-            
-            conn.commit()
-            return True
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de l'ajout de l'évaluation {assessment_id}: {e}")
-            conn.rollback()
-            return False
-        finally:
-            conn.close()
-            
+        return self.assessment_manager.add_assessment_config(config_dict)
+    
     def get_assessment_config(self, assessment_id):
         """
         Récupère une configuration d'évaluation par son ID.
@@ -560,32 +226,8 @@ class DatabaseManager:
         Returns:
             dict: Configuration de l'évaluation, None si non trouvée
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-            SELECT id, name, exercises, total_max_points
-            FROM assessment_configs
-            WHERE id = ?
-            ''', (assessment_id,))
-            
-            row = cursor.fetchone()
-            
-            if row:
-                return {
-                    'assessmentId': row[0],
-                    'name': row[1],
-                    'exercises': json.loads(row[2]),
-                    'totalMaxPoints': row[3]
-                }
-            return None
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la récupération de l'évaluation {assessment_id}: {e}")
-            return None
-        finally:
-            conn.close()
-            
+        return self.assessment_manager.get_assessment_config(assessment_id)
+    
     def get_all_assessment_configs(self):
         """
         Récupère toutes les configurations d'évaluations.
@@ -593,33 +235,8 @@ class DatabaseManager:
         Returns:
             dict: Dictionnaire de configurations {id: config_dict}
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-            SELECT id, name, exercises, total_max_points
-            FROM assessment_configs
-            ORDER BY name
-            ''')
-            
-            result = {}
-            for row in cursor.fetchall():
-                config = {
-                    'assessmentId': row[0],
-                    'name': row[1],
-                    'exercises': json.loads(row[2]),
-                    'totalMaxPoints': row[3]
-                }
-                result[row[0]] = config
-                
-            return result
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la récupération des évaluations: {e}")
-            return {}
-        finally:
-            conn.close()
-        
+        return self.assessment_manager.get_all_assessment_configs()
+    
     def delete_assessment_config(self, assessment_id):
         """
         Supprime une configuration d'évaluation.
@@ -630,21 +247,9 @@ class DatabaseManager:
         Returns:
             bool: True si la suppression a réussi
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('DELETE FROM assessment_configs WHERE id = ?', (assessment_id,))
-            conn.commit()
-            return cursor.rowcount > 0
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la suppression de l'évaluation {assessment_id}: {e}")
-            conn.rollback()
-            return False
-        finally:
-            conn.close()
+        return self.assessment_manager.delete_assessment_config(assessment_id)
     
-    # Méthodes pour gérer les paramètres de l'application
+    # Méthodes déléguées au SettingsManager
     
     def save_setting(self, key, value, description=None):
         """
@@ -658,38 +263,7 @@ class DatabaseManager:
         Returns:
             bool: True si l'opération a réussi
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            # Vérifier si le paramètre existe déjà
-            cursor.execute('SELECT key FROM application_settings WHERE key = ?', (key,))
-            existing = cursor.fetchone()
-            
-            if existing:
-                # Mise à jour
-                cursor.execute('''
-                UPDATE application_settings
-                SET value = ?, description = ?,
-                    last_modified = CURRENT_TIMESTAMP
-                WHERE key = ?
-                ''', (value, description, key))
-            else:
-                # Insertion
-                cursor.execute('''
-                INSERT INTO application_settings 
-                (key, value, description)
-                VALUES (?, ?, ?)
-                ''', (key, value, description))
-            
-            conn.commit()
-            return True
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la sauvegarde du paramètre {key}: {e}")
-            conn.rollback()
-            return False
-        finally:
-            conn.close()
+        return self.settings_manager.save_setting(key, value, description)
     
     def get_setting(self, key, default_value=None):
         """
@@ -702,25 +276,7 @@ class DatabaseManager:
         Returns:
             str: Valeur du paramètre ou default_value si non trouvé
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-            SELECT value FROM application_settings
-            WHERE key = ?
-            ''', (key,))
-            
-            row = cursor.fetchone()
-            
-            if row:
-                return row[0]
-            return default_value
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la récupération du paramètre {key}: {e}")
-            return default_value
-        finally:
-            conn.close()
+        return self.settings_manager.get_setting(key, default_value)
     
     def delete_setting(self, key):
         """
@@ -732,23 +288,7 @@ class DatabaseManager:
         Returns:
             bool: True si l'opération a réussi
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-            DELETE FROM application_settings
-            WHERE key = ?
-            ''', (key,))
-            
-            conn.commit()
-            return cursor.rowcount > 0
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la suppression du paramètre {key}: {e}")
-            conn.rollback()
-            return False
-        finally:
-            conn.close()
+        return self.settings_manager.delete_setting(key)
     
     def get_all_settings(self):
         """
@@ -757,27 +297,10 @@ class DatabaseManager:
         Returns:
             dict: Dictionnaire {clé: valeur} de tous les paramètres
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-            SELECT key, value FROM application_settings
-            ''')
-            
-            settings = {}
-            for row in cursor.fetchall():
-                settings[row[0]] = row[1]
-            
-            return settings
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la récupération des paramètres: {e}")
-            return {}
-        finally:
-            conn.close()
-
-    # Méthodes pour gérer les feedbacks
-
+        return self.settings_manager.get_all_settings()
+    
+    # Méthodes déléguées au FeedbackManager
+    
     def add_feedback(self, student_name, assessment_id, feedback_content, global_grade=None):
         """
         Ajoute un feedback dans la base de données.
@@ -791,46 +314,7 @@ class DatabaseManager:
         Returns:
             int: ID du feedback dans la base de données, ou -1 en cas d'erreur
         """
-        import hashlib
-        
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            # Générer un hash du feedback pour éviter les doublons
-            # On combine le nom de l'étudiant, l'ID de l'évaluation et le contenu
-            content_to_hash = f"{student_name}_{assessment_id}_{feedback_content[:100]}"
-            hash_id = hashlib.md5(content_to_hash.encode('utf-8')).hexdigest()
-            
-            # Vérifier si un feedback avec ce hash existe déjà
-            cursor.execute('SELECT id FROM feedbacks WHERE hash_id = ?', (hash_id,))
-            existing = cursor.fetchone()
-            
-            if existing:
-                print(f"Un feedback similaire existe déjà pour {student_name} (ID: {existing[0]})")
-                # Mettre à jour le feedback existant
-                cursor.execute('''
-                UPDATE feedbacks
-                SET feedback_content = ?, global_grade = ?, creation_date = CURRENT_TIMESTAMP
-                WHERE hash_id = ?
-                ''', (feedback_content, global_grade, hash_id))
-                feedback_id = existing[0]
-            else:
-                # Ajouter un nouveau feedback
-                cursor.execute('''
-                INSERT INTO feedbacks (student_name, assessment_id, feedback_content, global_grade, hash_id)
-                VALUES (?, ?, ?, ?, ?)
-                ''', (student_name, assessment_id, feedback_content, global_grade, hash_id))
-                feedback_id = cursor.lastrowid
-            
-            conn.commit()
-            return feedback_id
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de l'ajout du feedback pour {student_name}: {e}")
-            conn.rollback()
-            return -1
-        finally:
-            conn.close()
+        return self.feedback_manager.add_feedback(student_name, assessment_id, feedback_content, global_grade)
     
     def get_feedback(self, feedback_id):
         """
@@ -842,33 +326,7 @@ class DatabaseManager:
         Returns:
             dict: Données du feedback, None si non trouvé
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-            SELECT id, student_name, assessment_id, feedback_content, global_grade, creation_date
-            FROM feedbacks
-            WHERE id = ?
-            ''', (feedback_id,))
-            
-            row = cursor.fetchone()
-            
-            if row:
-                return {
-                    'id': row[0],
-                    'student_name': row[1],
-                    'assessment_id': row[2],
-                    'feedback_content': row[3],
-                    'global_grade': row[4],
-                    'creation_date': row[5]
-                }
-            return None
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la récupération du feedback {feedback_id}: {e}")
-            return None
-        finally:
-            conn.close()
+        return self.feedback_manager.get_feedback(feedback_id)
     
     def get_student_feedbacks(self, student_name):
         """
@@ -880,35 +338,7 @@ class DatabaseManager:
         Returns:
             list: Liste des feedbacks de l'étudiant
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-            SELECT id, student_name, assessment_id, feedback_content, global_grade, creation_date
-            FROM feedbacks
-            WHERE student_name = ?
-            ORDER BY creation_date DESC
-            ''', (student_name,))
-            
-            result = []
-            for row in cursor.fetchall():
-                feedback = {
-                    'id': row[0],
-                    'student_name': row[1],
-                    'assessment_id': row[2],
-                    'feedback_content': row[3],
-                    'global_grade': row[4],
-                    'creation_date': row[5]
-                }
-                result.append(feedback)
-                
-            return result
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la récupération des feedbacks pour {student_name}: {e}")
-            return []
-        finally:
-            conn.close()
+        return self.feedback_manager.get_student_feedbacks(student_name)
     
     def get_assessment_feedbacks(self, assessment_id):
         """
@@ -920,35 +350,7 @@ class DatabaseManager:
         Returns:
             list: Liste des feedbacks de l'évaluation
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-            SELECT id, student_name, assessment_id, feedback_content, global_grade, creation_date
-            FROM feedbacks
-            WHERE assessment_id = ?
-            ORDER BY student_name, creation_date DESC
-            ''', (assessment_id,))
-            
-            result = []
-            for row in cursor.fetchall():
-                feedback = {
-                    'id': row[0],
-                    'student_name': row[1],
-                    'assessment_id': row[2],
-                    'feedback_content': row[3],
-                    'global_grade': row[4],
-                    'creation_date': row[5]
-                }
-                result.append(feedback)
-                
-            return result
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la récupération des feedbacks pour l'évaluation {assessment_id}: {e}")
-            return []
-        finally:
-            conn.close()
+        return self.feedback_manager.get_assessment_feedbacks(assessment_id)
     
     def get_all_feedbacks(self):
         """
@@ -957,34 +359,7 @@ class DatabaseManager:
         Returns:
             list: Liste de tous les feedbacks
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-            SELECT id, student_name, assessment_id, feedback_content, global_grade, creation_date
-            FROM feedbacks
-            ORDER BY creation_date DESC
-            ''')
-            
-            result = []
-            for row in cursor.fetchall():
-                feedback = {
-                    'id': row[0],
-                    'student_name': row[1],
-                    'assessment_id': row[2],
-                    'feedback_content': row[3],
-                    'global_grade': row[4],
-                    'creation_date': row[5]
-                }
-                result.append(feedback)
-                
-            return result
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la récupération de tous les feedbacks: {e}")
-            return []
-        finally:
-            conn.close()
+        return self.feedback_manager.get_all_feedbacks()
     
     def delete_feedback(self, feedback_id):
         """
@@ -996,16 +371,4 @@ class DatabaseManager:
         Returns:
             bool: True si la suppression a réussi
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('DELETE FROM feedbacks WHERE id = ?', (feedback_id,))
-            conn.commit()
-            return cursor.rowcount > 0
-        except sqlite3.Error as e:
-            print(f"Erreur SQLite lors de la suppression du feedback {feedback_id}: {e}")
-            conn.rollback()
-            return False
-        finally:
-            conn.close() 
+        return self.feedback_manager.delete_feedback(feedback_id) 
