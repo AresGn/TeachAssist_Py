@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon, QFont
 
 import os
+import sqlite3
 
 
 class StatsWidget(QWidget):
@@ -24,6 +25,8 @@ class StatsWidget(QWidget):
             'exercises': 0,
             'feedback_count': 0
         }
+        # Initialiser le dictionnaire des labels de valeurs une seule fois
+        self.value_labels = {}
         self.init_ui()
         self.update_stats()
     
@@ -130,10 +133,11 @@ class StatsWidget(QWidget):
         title_label.setStyleSheet("color: white; font-size: 14px;")
         info_layout.addWidget(title_label)
         
-        self.value_labels = {}
+        # Ne pas réinitialiser self.value_labels ici
         value_label = QLabel(value)
         value_label.setStyleSheet("color: white; font-size: 28px; font-weight: bold;")
         info_layout.addWidget(value_label)
+        # Stocker la référence au label dans le dictionnaire
         self.value_labels[title.lower()] = value_label
         
         layout.addLayout(info_layout)
@@ -146,9 +150,12 @@ class StatsWidget(QWidget):
         """Mettre à jour les statistiques à partir de la base de données."""
         if self.submission_manager and self.db_manager:
             try:
+                print("Débogage - Mise à jour des statistiques...")
+                
                 # Nombre d'étudiants (depuis les fichiers ZIP)
                 if hasattr(self.submission_manager, 'get_all_zip_files_from_db'):
                     zip_files = self.submission_manager.get_all_zip_files_from_db()
+                    print(f"Débogage - Fichiers ZIP trouvés: {len(zip_files)}")
                     # Utilisation d'un ensemble pour éviter les doublons
                     student_names = set()
                     for zip_file in zip_files:
@@ -156,51 +163,68 @@ class StatsWidget(QWidget):
                         student_name = os.path.splitext(filename)[0]
                         student_names.add(student_name)
                     self.stats['students'] = len(student_names)
+                    print(f"Débogage - Nombre d'étudiants: {self.stats['students']}")
                 
                 # Nombre de soumissions (fichiers ZIP)
                 if hasattr(self.submission_manager, 'get_all_zip_files_from_db'):
                     zip_files = self.submission_manager.get_all_zip_files_from_db()
                     self.stats['submissions'] = len(zip_files)
+                    print(f"Débogage - Nombre de soumissions: {self.stats['submissions']}")
                 
-                # Nombre d'évaluations, exercices et feedbacks
-                # Note: ces informations peuvent nécessiter un accès à d'autres parties de la base de données
-                # Pour l'instant, on utilise des données statiques ou calculées à partir d'autres sources
+                # Nombre d'évaluations (assessment configs)
+                if hasattr(self.db_manager, 'get_all_assessment_configs'):
+                    assessment_configs = self.db_manager.get_all_assessment_configs()
+                    self.stats['assessments'] = len(assessment_configs)
+                    print(f"Débogage - Nombre d'évaluations: {self.stats['assessments']}")
                 
-                # Rechercher les fichiers d'évaluation dans le répertoire assessments
-                assessment_files = []
-                assessments_dir = os.path.join(os.getcwd(), "assessments")
-                if os.path.exists(assessments_dir):
-                    assessment_files = [f for f in os.listdir(assessments_dir) 
-                                      if f.endswith('.json')]
-                self.stats['assessments'] = len(assessment_files)
+                # Nombre d'exercices (exercise configs)
+                if hasattr(self.db_manager, 'get_all_exercise_configs'):
+                    exercise_configs = self.db_manager.get_all_exercise_configs()
+                    self.stats['exercises'] = len(exercise_configs)
+                    print(f"Débogage - Nombre d'exercices: {self.stats['exercises']}")
                 
-                # Compter le nombre d'exercices à partir des fichiers d'évaluation
-                exercise_count = 0
-                import json
-                for assessment_file in assessment_files:
-                    try:
-                        with open(os.path.join(assessments_dir, assessment_file), 'r', encoding='utf-8') as f:
-                            assessment_data = json.load(f)
-                            if 'exercises' in assessment_data:
-                                exercise_count += len(assessment_data['exercises'])
-                    except:
-                        pass
-                self.stats['exercises'] = exercise_count
-                
-                # Nombre de feedbacks générés
-                # Rechercher les fichiers de feedback
-                feedback_dir = os.path.join(os.getcwd(), "data", "feedback")
+                # Nombre de feedbacks
                 feedback_count = 0
-                if os.path.exists(feedback_dir):
-                    feedback_files = [f for f in os.listdir(feedback_dir) 
-                                     if f.endswith('.txt') or f.endswith('.md')]
-                    feedback_count = len(feedback_files)
+                
+                # Utiliser directement get_all_feedbacks si disponible
+                if hasattr(self.db_manager, 'get_all_feedbacks'):
+                    feedbacks = self.db_manager.get_all_feedbacks()
+                    feedback_count = len(feedbacks)
+                    print(f"Débogage - Nombre de feedbacks depuis get_all_feedbacks: {feedback_count}")
+                else:
+                    # Fallback pour la compatibilité avec les anciennes versions
+                    try:
+                        conn = sqlite3.connect(self.db_manager.db_path)
+                        cursor = conn.cursor()
+                        cursor.execute('SELECT COUNT(*) FROM feedbacks')
+                        result = cursor.fetchone()
+                        if result and result[0]:
+                            feedback_count = result[0]
+                        conn.close()
+                        print(f"Débogage - Nombre de feedbacks depuis la base de données: {feedback_count}")
+                    except Exception as e:
+                        print(f"Erreur lors du comptage des feedbacks: {str(e)}")
+                        # Fallback: vérifier les fichiers dans le dossier feedback
+                        feedback_dir = os.path.join(os.getcwd(), "data", "feedback")
+                        if os.path.exists(feedback_dir):
+                            feedback_files = [f for f in os.listdir(feedback_dir) 
+                                             if f.endswith('.txt') or f.endswith('.md')]
+                            feedback_count = len(feedback_files)
+                            print(f"Débogage - Nombre de feedbacks depuis les fichiers: {feedback_count}")
+                    
                 self.stats['feedback_count'] = feedback_count
+                print(f"Débogage - Nombre total de feedbacks: {self.stats['feedback_count']}")
                 
                 # Mettre à jour les labels avec les nouvelles valeurs
                 self._update_value_labels()
+                print("Débogage - Labels mis à jour")
+                # Vérifier les valeurs des labels après mise à jour
+                for key, label in self.value_labels.items():
+                    print(f"Débogage - Label '{key}': {label.text()}")
             except Exception as e:
                 print(f"Erreur lors de la mise à jour des statistiques: {str(e)}")
+                import traceback
+                traceback.print_exc()
     
     def _update_value_labels(self):
         """Mettre à jour les labels avec les nouvelles valeurs."""

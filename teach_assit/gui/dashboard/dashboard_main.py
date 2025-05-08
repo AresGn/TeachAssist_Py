@@ -5,7 +5,7 @@ Module principal pour le tableau de bord personnalisé avec des statistiques ava
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                             QGridLayout, QFrame, QPushButton, QSizePolicy,
                             QTabWidget, QScrollArea)
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtGui import QIcon, QFont
 
 from teach_assit.gui.dashboard.stats_widget import StatsWidget
@@ -21,7 +21,20 @@ class EnhancedDashboard(QWidget):
         super().__init__(parent)
         self.submission_manager = submission_manager
         self.db_manager = db_manager
+        
+        print("Initialisation du Dashboard avec:")
+        print(f"submission_manager: {self.submission_manager}")
+        print(f"db_manager: {self.db_manager}")
+        
         self.init_ui()
+        
+        # Configurer un timer pour rafraîchir les données automatiquement toutes les 30 secondes
+        self.refresh_timer = QTimer(self)
+        self.refresh_timer.timeout.connect(self.refresh_data)
+        self.refresh_timer.start(30000)  # 30 secondes
+        
+        # Forcer le rafraîchissement des données après l'initialisation
+        self.refresh_data()
     
     def init_ui(self):
         """Initialiser l'interface utilisateur du tableau de bord amélioré."""
@@ -96,7 +109,41 @@ class EnhancedDashboard(QWidget):
     
     def refresh_data(self):
         """Actualiser toutes les données du tableau de bord."""
-        self.stats_widget.update_stats()
-        self.performance_widget.update_data()
-        self.students_widget.update_data()
-        self.grades_widget.update_data() 
+        print("Rafraîchissement des données du tableau de bord...")
+        
+        if not self.submission_manager or not self.db_manager:
+            print("ERREUR: Les managers ne sont pas correctement initialisés!")
+            print(f"submission_manager: {self.submission_manager}")
+            print(f"db_manager: {self.db_manager}")
+            return
+        
+        try:
+            # Mettre à jour les statistiques
+            if hasattr(self.stats_widget, 'update_stats'):
+                self.stats_widget.update_stats()
+            else:
+                print("ERREUR: stats_widget n'a pas de méthode update_stats")
+            
+            # Mettre à jour les performances
+            if hasattr(self.performance_widget, 'update_data'):
+                self.performance_widget.update_data()
+            else:
+                print("ERREUR: performance_widget n'a pas de méthode update_data")
+            
+            # Mettre à jour les données des étudiants
+            if hasattr(self.students_widget, 'update_data'):
+                self.students_widget.update_data()
+            else:
+                print("ERREUR: students_widget n'a pas de méthode update_data")
+            
+            # Mettre à jour les notes
+            if hasattr(self.grades_widget, 'update_data'):
+                self.grades_widget.update_data()
+            else:
+                print("ERREUR: grades_widget n'a pas de méthode update_data")
+            
+            print("Rafraîchissement des données terminé avec succès.")
+        except Exception as e:
+            print(f"ERREUR lors du rafraîchissement des données: {str(e)}")
+            import traceback
+            traceback.print_exc() 

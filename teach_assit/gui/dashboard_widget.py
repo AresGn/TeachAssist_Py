@@ -12,8 +12,10 @@ class DashboardWidget(QWidget):
     Cette classe est un wrapper autour du tableau de bord amélioré.
     """
     
-    def __init__(self, parent=None):
+    def __init__(self, submission_manager=None, db_manager=None, parent=None):
         super().__init__(parent)
+        self.submission_manager = submission_manager
+        self.db_manager = db_manager
         self.init_ui()
     
     def init_ui(self):
@@ -32,8 +34,12 @@ class DashboardWidget(QWidget):
         dashboard_layout = QVBoxLayout(dashboard_container)
         dashboard_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Utiliser le tableau de bord amélioré
-        self.enhanced_dashboard = EnhancedDashboard(parent=self)
+        # Utiliser le tableau de bord amélioré avec les managers
+        self.enhanced_dashboard = EnhancedDashboard(
+            submission_manager=self.submission_manager,
+            db_manager=self.db_manager,
+            parent=self
+        )
         dashboard_layout.addWidget(self.enhanced_dashboard)
         
         # Ajouter le conteneur du dashboard à la zone de défilement
@@ -45,4 +51,12 @@ class DashboardWidget(QWidget):
     def update_dashboard(self):
         """Mettre à jour le tableau de bord."""
         if hasattr(self, 'enhanced_dashboard'):
+            print("Mise à jour du dashboard depuis DashboardWidget")
+            # Mettre à jour les références aux managers si nécessaire
+            if self.submission_manager and hasattr(self.enhanced_dashboard, 'submission_manager'):
+                self.enhanced_dashboard.submission_manager = self.submission_manager
+            
+            if self.db_manager and hasattr(self.enhanced_dashboard, 'db_manager'):
+                self.enhanced_dashboard.db_manager = self.db_manager
+            
             self.enhanced_dashboard.refresh_data() 

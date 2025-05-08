@@ -63,3 +63,63 @@ L'approche actuelle présente plusieurs avantages :
 Cette solution résout efficacement le problème initial où le bouton "Exécuter les codes" ne fonctionnait pas pour TD3, tout en créant une base solide pour gérer tous les TDs présents et futurs.
 
 N'hésitez pas si vous avez besoin d'autres améliorations ou fonctionnalités pour votre application TeachAssist !
+
+
+Merci pour la capture d’écran, c’est très utile pour diagnostiquer !  
+Voici ce qui peut expliquer pourquoi tu vois toujours **0** partout sur le dashboard, même après la modification :
+
+---
+
+### 1. **La base de données est-elle vraiment remplie ?**
+- Si les tables `zip_files`, `assessment_configs`, etc. sont vides, le dashboard affichera 0.
+- **Vérifie** que tu as bien des données dans la base (ajoute des fichiers ZIP, des évaluations, etc.).
+
+---
+
+### 2. **Le dashboard utilise-t-il la bonne instance de la base de données ?**
+- Si tu as plusieurs fichiers `.db` ou si l’application pointe vers une base vide, tu verras 0.
+- **Vérifie** le chemin de la base utilisée (`data/teachassist.db` par défaut).
+
+---
+
+### 3. **Le code appelle-t-il bien les méthodes de la base ?**
+- Ton code appelle bien `get_all_assessment_configs` et `get_all_zip_files_from_db`, donc si la base est remplie, tu devrais voir des chiffres.
+
+---
+
+### 4. **Problème d’initialisation ou de passage d’instance**
+- Si le `db_manager` passé au dashboard n’est pas le même que celui utilisé pour insérer les données, tu auras 0.
+- **Vérifie** que tu utilises la même instance de `DatabaseManager` partout.
+
+---
+
+### 5. **Test rapide pour vérifier la base**
+Ouvre un terminal dans le dossier du projet et exécute :
+```bash
+sqlite3 data/teachassist.db "SELECT COUNT(*) FROM zip_files;"
+sqlite3 data/teachassist.db "SELECT COUNT(*) FROM assessment_configs;"
+```
+- Si tu obtiens 0, c’est que la base est vide.
+- Si tu obtiens un nombre > 0, c’est un problème de code ou d’instance.
+
+---
+
+### 6. **Debug rapide dans le code**
+Ajoute un print dans `update_stats` pour voir ce que retourne la base :
+```python
+print("ZIPs:", self.submission_manager.get_all_zip_files_from_db())
+print("Assessments:", self.db_manager.get_all_assessment_configs())
+```
+- Lance l’appli et regarde la console pour voir si tu récupères des données.
+
+---
+
+## **Que faire maintenant ?**
+
+1. **Vérifie que tu as bien des données dans la base** (voir point 5).
+2. **Ajoute un print** dans `update_stats` pour voir ce que tu récupères.
+3. **Assure-toi que tu utilises la même base de données partout**.
+
+---
+
+**Si tu veux, je peux t’aider à écrire un script pour remplir la base avec des exemples, ou à faire un diagnostic plus poussé. Dis-moi ce que tu veux faire !**

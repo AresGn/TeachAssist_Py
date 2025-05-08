@@ -140,14 +140,16 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(self.tab_widget)
         
         # Onglet Tableau de bord
-        self.dashboard_tab = DashboardWidget()
-        # Transmettre les gestionnaires au tableau de bord amélioré si disponible
-        if hasattr(self.dashboard_tab, 'enhanced_dashboard'):
-            self.dashboard_tab.enhanced_dashboard.submission_manager = self.submission_manager
-            self.dashboard_tab.enhanced_dashboard.db_manager = self.submission_manager.db_manager if self.submission_manager else None
-            # Mettre à jour les données du tableau de bord
-            self.dashboard_tab.update_dashboard()
+        self.dashboard_tab = DashboardWidget(
+            submission_manager=self.submission_manager,
+            db_manager=self.submission_manager.db_manager if self.submission_manager else None
+        )
         
+        # Forcer la mise à jour pour rafraîchir les statistiques
+        self.dashboard_tab.update_dashboard()
+        
+        # Plus besoin de la mise à jour manuelle des managers, ils sont déjà passés
+        # lors de l'initialisation du widget
         self.tab_widget.addTab(self.dashboard_tab, "Tableau de bord")
         
         # Onglet Fichiers (remplace l'onglet d'extraction)
@@ -172,6 +174,11 @@ class MainWindow(QMainWindow):
         
         # Connecter le widget de feedback au widget de résultats
         self.feedback_tab.set_results_widget(self.results_tab)
+        
+        # Passer le gestionnaire de base de données au widget de feedback
+        if hasattr(self.submission_manager, 'db_manager') and self.submission_manager.db_manager:
+            self.feedback_tab.db_manager = self.submission_manager.db_manager
+            print("DatabaseManager transmis au widget de feedback")
         
         # Onglet de configuration
         self.config_editor = ConfigEditorWidget()

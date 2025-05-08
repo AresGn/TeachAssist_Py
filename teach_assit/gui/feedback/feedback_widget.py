@@ -50,6 +50,9 @@ class FeedbackWidget(QWidget):
         # Initialiser le gestionnaire de données
         self.data_manager = DataManager()
         
+        # Charger l'API key
+        self._load_settings()
+        
         # Configuration du layout principal
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setSpacing(10)
@@ -194,8 +197,15 @@ class FeedbackWidget(QWidget):
         self._save_settings()
         
     def set_results_widget(self, results_widget):
-        """Définit la référence au widget de résultats pour récupérer les données"""
+        """Connecte le widget de résultats pour faciliter la synchronisation"""
         self.results_widget = results_widget
+        if self.results_widget:
+            print("Widget de résultats connecté au widget de feedback")
+            # Si le widget de résultats a un db_manager, l'utiliser
+            if hasattr(results_widget, 'db_manager') and results_widget.db_manager:
+                self.db_manager = results_widget.db_manager
+                print("DatabaseManager récupéré depuis le widget de résultats")
+        
         self.data_manager.results_widget = results_widget
         
         # Synchroniser automatiquement lors de l'initialisation
@@ -861,6 +871,40 @@ class FeedbackWidget(QWidget):
         
         # Mettre à jour le statut de tous les exercices dans le tableau avec les notes individuelles
         self.update_exercises_status_with_notes(exercise_notes)
+        
+        # Sauvegarder le feedback dans la base de données
+        try:
+            student_name = self.current_student
+            # Récupérer l'ID de l'évaluation actuelle si disponible
+            assessment_id = None
+            if self.results_widget and hasattr(self.results_widget, 'get_current_assessment_id'):
+                assessment_id = self.results_widget.get_current_assessment_id()
+            elif self.results_widget and hasattr(self.results_widget, 'get_current_assessment_name'):
+                assessment_id = self.results_widget.get_current_assessment_name()
+                
+            # Enregistrer dans la base de données si nous avons un db_manager
+            if hasattr(self, 'db_manager') and self.db_manager is not None:
+                feedback_id = self.db_manager.add_feedback(
+                    student_name=student_name,
+                    assessment_id=assessment_id,
+                    feedback_content=feedback,
+                    global_grade=note_texte
+                )
+                if feedback_id > 0:
+                    print(f"Feedback enregistré dans la base de données avec l'ID {feedback_id}")
+                    # Utiliser l'API QT pour afficher un statut temporaire dans la barre de statut
+                    if self.parent() and hasattr(self.parent(), 'statusBar'):
+                        self.parent().statusBar().showMessage(f"Feedback enregistré dans la base de données", 3000)
+                    elif self.window() and hasattr(self.window(), 'statusBar'):
+                        self.window().statusBar().showMessage(f"Feedback enregistré dans la base de données", 3000)
+                else:
+                    print("Erreur lors de l'enregistrement du feedback dans la base de données")
+            else:
+                print("Impossible d'enregistrer le feedback - Aucun gestionnaire de base de données disponible")
+        except Exception as e:
+            print(f"Erreur lors de l'enregistrement du feedback: {str(e)}")
+            import traceback
+            traceback.print_exc()
     
     def get_exercise_ids(self):
         """Récupère les IDs des exercices actuellement affichés dans le tableau"""
